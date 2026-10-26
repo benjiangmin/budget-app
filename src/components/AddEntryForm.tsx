@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { addEntry, type FormState } from "@/app/actions";
 import type { Category } from "@/lib/data";
+import DateWheel from "./DateWheel";
 
 const initial: FormState = { ok: false, message: null };
 
@@ -26,12 +27,11 @@ export default function AddEntryForm({
   const formRef = useRef<HTMLFormElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
 
-  // Clear amount + note after a save, keep category and date for quick repeat entries.
+  // Clear the amount after a save, keep category and date for quick repeat entries.
   useEffect(() => {
     if (state.ok && formRef.current) {
       const form = formRef.current;
       (form.elements.namedItem("amount") as HTMLInputElement).value = "";
-      (form.elements.namedItem("note") as HTMLInputElement).value = "";
       amountRef.current?.focus();
     }
   }, [state.savedAt, state.ok]);
@@ -42,7 +42,7 @@ export default function AddEntryForm({
     "w-full rounded-xl border border-line bg-paper px-3 py-2.5 text-ink placeholder:text-muted/70 focus:border-ink focus:outline-none";
 
   return (
-    <section aria-labelledby="add-heading" className="mt-12 rounded-3xl bg-surface p-5 sm:p-6">
+    <section aria-labelledby="add-heading" className="rounded-3xl bg-surface p-5 sm:p-6">
       <h2 id="add-heading" className="font-display text-xl font-semibold">
         Add an expense
       </h2>
@@ -80,22 +80,10 @@ export default function AddEntryForm({
           </select>
         </label>
 
-        <label className="col-span-2 sm:col-span-1">
+        <div className="col-span-2">
           <span className="mb-1 block text-sm text-muted">Date</span>
-          <input
-            key={defaultDate}
-            name="spent_on"
-            type="date"
-            required
-            defaultValue={defaultDate}
-            className={field}
-          />
-        </label>
-
-        <label className="col-span-2 sm:col-span-1">
-          <span className="mb-1 block text-sm text-muted">Note (optional)</span>
-          <input name="note" type="text" maxLength={120} placeholder="Trader Joe's" className={field} />
-        </label>
+          <DateWheel key={defaultDate} name="spent_on" defaultValue={defaultDate} />
+        </div>
 
         <div className="col-span-2 mt-1 flex items-center gap-4">
           <button

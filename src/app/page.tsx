@@ -3,7 +3,7 @@ import MonthView from "@/components/MonthView";
 
 export default function Page(props: PageProps<"/">) {
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pb-24 pt-8 sm:pt-14">
+    <main className="mx-auto w-full max-w-4xl px-4 pb-24 pt-8 sm:pt-14">
       <Suspense fallback={<MonthSkeleton />}>
         <MonthView searchParams={props.searchParams} />
       </Suspense>

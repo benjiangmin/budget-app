@@ -10,6 +10,7 @@ import {
 } from "@/lib/month";
 import AddEntryForm from "./AddEntryForm";
 import EntryList from "./EntryList";
+import MonthPicker from "./MonthPicker";
 
 export default async function MonthView({
   searchParams,
@@ -37,7 +38,7 @@ export default async function MonthView({
     .filter((c) => c.spent > 0)
     .sort((a, b) => b.spent - a.spent);
 
-  const { month, year } = monthLabel(monthKey);
+  const { month } = monthLabel(monthKey);
   const prev = shiftMonth(monthKey, -1);
   const next = shiftMonth(monthKey, 1);
   const isThisMonth = monthKey === thisMonth;
@@ -47,66 +48,68 @@ export default async function MonthView({
       <header className="flex items-center justify-between gap-4">
         <MonthArrow href={`/?m=${prev}`} label={`Show ${monthLabel(prev).month}`} dir="prev" />
         <div className="text-center">
-          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            {month} <span className="text-muted">{year}</span>
+          <h1>
+            <MonthPicker monthKey={monthKey} label={month} />
           </h1>
           {!isThisMonth && (
             <Link href="/" className="text-sm text-muted underline-offset-4 hover:underline">
-              Back to this month
+              Jump to current month
             </Link>
           )}
         </div>
         <MonthArrow href={`/?m=${next}`} label={`Show ${monthLabel(next).month}`} dir="next" />
       </header>
 
-      <section aria-label="Spending this month" className="mt-10">
-        <p className="text-sm text-muted">Spent</p>
-        <p className="num font-display text-6xl font-semibold leading-none tracking-tight sm:text-7xl">
-          {formatMoney(total)}
-        </p>
-
-        {rows.length > 0 ? (
-          <>
-            <div
-              key={monthKey}
-              className="strip-grow mt-6 flex h-5 w-full gap-0.5 overflow-hidden rounded-full"
-              aria-hidden="true"
-            >
-              {rows.map((r) => (
-                <div
-                  key={r.id}
-                  style={{ flexGrow: r.spent, backgroundColor: r.color }}
-                  className="min-w-1.5"
-                />
-              ))}
-            </div>
-
-            <ul className="mt-6 divide-y divide-line">
-              {rows.map((r) => {
-                const pct = Math.round((r.spent / total) * 100);
-                return (
-                  <li key={r.id} className="flex items-center gap-3 py-3">
-                    <span
-                      className="size-3 shrink-0 rounded-full"
-                      style={{ backgroundColor: r.color }}
-                      aria-hidden="true"
-                    />
-                    <span className="flex-1">{r.name}</span>
-                    <span className="num w-10 text-right text-sm text-muted">{pct}%</span>
-                    <span className="num w-24 text-right font-medium">{formatMoney(r.spent)}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        ) : (
-          <p className="mt-6 rounded-2xl border border-dashed border-line px-5 py-6 text-muted">
-            Nothing logged for {month} yet. Add your first expense below.
+      <div className="mt-10 grid gap-10 md:grid-cols-2 md:items-start">
+        <section aria-label="Spending this month">
+          <p className="text-sm text-muted">Spent</p>
+          <p className="num font-display text-6xl font-semibold leading-none tracking-tight sm:text-7xl">
+            {formatMoney(total)}
           </p>
-        )}
-      </section>
 
-      <AddEntryForm categories={categories} monthKey={monthKey} isThisMonth={isThisMonth} />
+          {rows.length > 0 ? (
+            <>
+              <div
+                key={monthKey}
+                className="strip-grow mt-6 flex h-5 w-full gap-0.5 overflow-hidden rounded-full"
+                aria-hidden="true"
+              >
+                {rows.map((r) => (
+                  <div
+                    key={r.id}
+                    style={{ flexGrow: r.spent, backgroundColor: r.color }}
+                    className="min-w-1.5"
+                  />
+                ))}
+              </div>
+
+              <ul className="mt-6 divide-y divide-line">
+                {rows.map((r) => {
+                  const pct = Math.round((r.spent / total) * 100);
+                  return (
+                    <li key={r.id} className="flex items-center gap-3 py-3">
+                      <span
+                        className="size-3 shrink-0 rounded-full"
+                        style={{ backgroundColor: r.color }}
+                        aria-hidden="true"
+                      />
+                      <span className="flex-1">{r.name}</span>
+                      <span className="num w-10 text-right text-sm text-muted">{pct}%</span>
+                      <span className="num w-24 text-right font-medium">{formatMoney(r.spent)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : (
+            <p className="mt-6 rounded-2xl border border-dashed border-line px-5 py-6 text-muted">
+              Nothing logged for {month} yet. Add your first expense.
+            </p>
+          )}
+        </section>
+
+        <AddEntryForm categories={categories} monthKey={monthKey} isThisMonth={isThisMonth} />
+      </div>
 
       <EntryList entries={entries} categories={categories} />
     </>

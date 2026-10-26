@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
+/* Milk, oat, mocha, espresso. */
 :root {
-  --paper: #e9eee9;
-  --surface: #f6f8f5;
-  --ink: #16302a;
-  --muted: #5f726c;
-  --line: #cfd9d3;
-  --accent: #f0b13a;
-  --accent-ink: #2a1d05;
-  --danger: #b03a48;
+  --paper: #faf6f0;
+  --surface: #f0e7db;
+  --ink: #2b1c14;
+  --muted: #86705f;
+  --line: #e2d5c4;
+  --accent: #3e281b;
+  --accent-ink: #faf6f0;
+  --danger: #a3473a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #101a17;
-    --surface: #17241f;
-    --ink: #e4ece7;
-    --muted: #8fa39b;
-    --line: #2a3a34;
-    --accent: #f0b13a;
-    --accent-ink: #2a1d05;
-    --danger: #e0727f;
+    --paper: #1b1410;
+    --surface: #271d17;
+    --ink: #f3e9de;
+    --muted: #b39d8a;
+    --line: #3a2c23;
+    --accent: #d6a46a;
+    --accent-ink: #1b1410;
+    --danger: #e08a7c;
   }
 }
 
