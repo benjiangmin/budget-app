@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Budget
 
-## Getting Started
+Log expenses, see spending per category, flip between months.
 
-First, run the development server:
+Next.js (App Router) + Tailwind + Supabase. All database calls run on the server with your secret key, so nothing sensitive reaches the browser.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Setup
+
+1. **Install**
+   ```bash
+   npm install
+   ```
+
+2. **Create the tables** — Supabase dashboard → SQL Editor → New query → paste `supabase/schema.sql` → Run.
+   This creates `categories` and `entries` and adds 7 starter categories. Rename or recolor them in the Table Editor anytime.
+
+3. **Add your keys** — copy `.env.example` to `.env.local` and fill in:
+   - `SUPABASE_URL` — Project Settings → API
+   - `SUPABASE_SECRET_KEY` — the secret key (`sb_secret_…`) or legacy `service_role` key
+
+4. **Run it**
+   ```bash
+   npm run dev
+   ```
+   Open http://localhost:3000.
+
+## Project map
+
+```
+src/app/page.tsx            page shell
+src/app/actions.ts          add / delete expense (server actions)
+src/components/MonthView    month header, total, category breakdown
+src/components/AddEntryForm the expense form
+src/components/EntryList    expenses grouped by day
+src/lib/data.ts             Supabase reads
+src/lib/month.ts            month math + money formatting
+supabase/schema.sql         tables, RLS, starter categories
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Before deploying publicly
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+There's no login yet. That's fine on localhost, but add Supabase Auth (and a `user_id` column) before putting this on Vercel, or anyone with the URL can add and delete entries.
