@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Milk, oat, mocha, espresso. */
+/* Milk, oat, mocha, espresso. Always light, even if the computer is in dark mode. */
 :root {
   --paper: #faf6f0;
   --surface: #f0e7db;
@@ -10,19 +10,6 @@
   --accent: #3e281b;
   --accent-ink: #faf6f0;
   --danger: #a3473a;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #1b1410;
-    --surface: #271d17;
-    --ink: #f3e9de;
-    --muted: #b39d8a;
-    --line: #3a2c23;
-    --accent: #d6a46a;
-    --accent-ink: #1b1410;
-    --danger: #e08a7c;
-  }
 }
 
 @theme inline {
@@ -39,7 +26,7 @@
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 body {
