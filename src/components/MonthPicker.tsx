@@ -41,19 +41,19 @@ export default function MonthPicker({ monthKey, label }: { monthKey: string; lab
           setOpen((o) => !o);
         }}
         aria-expanded={open}
-        className="rounded-xl px-3 py-1 font-display text-3xl font-semibold tracking-tight transition-colors hover:bg-surface sm:text-4xl"
+        className="rounded-control px-3 py-1 font-display text-2xl font-semibold tracking-tight transition-colors hover:bg-accent-ink/10 sm:text-3xl"
       >
-        {label} <span className="text-muted">{selYear}</span>
+        {label} <span className="opacity-60">{selYear}</span>
       </button>
 
       {open && (
-        <div className="absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-2xl border border-line bg-paper p-4 shadow-xl shadow-ink/10">
+        <div className="absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2 rounded-card border border-line bg-paper p-4 text-ink shadow-xl shadow-ink/10">
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => setYear((y) => y - 1)}
               aria-label="Previous year"
-              className="grid size-9 place-items-center rounded-full hover:bg-surface"
+              className="grid size-9 place-items-center rounded-control hover:bg-surface"
             >
               ‹
             </button>
@@ -62,7 +62,7 @@ export default function MonthPicker({ monthKey, label }: { monthKey: string; lab
               type="button"
               onClick={() => setYear((y) => y + 1)}
               aria-label="Next year"
-              className="grid size-9 place-items-center rounded-full hover:bg-surface"
+              className="grid size-9 place-items-center rounded-control hover:bg-surface"
             >
               ›
             </button>
@@ -76,7 +76,7 @@ export default function MonthPicker({ monthKey, label }: { monthKey: string; lab
                   key={m}
                   type="button"
                   onClick={() => go(i + 1)}
-                  className={`rounded-lg py-2 text-sm transition-colors ${
+                  className={`rounded-control py-2 text-sm transition-colors ${
                     selected ? "bg-accent text-accent-ink" : "hover:bg-surface"
                   }`}
                 >

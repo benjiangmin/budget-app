@@ -14,8 +14,8 @@ export default function Page(props: PageProps<"/">) {
 function MonthSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading month" className="animate-pulse">
-      <div className="h-10 w-48 rounded-lg bg-line" />
-      <div className="mt-6 h-16 w-64 rounded-lg bg-line" />
+      <div className="h-10 w-48 rounded-control bg-line" />
+      <div className="mt-6 h-16 w-64 rounded-control bg-line" />
       <div className="mt-6 h-5 w-full rounded-full bg-line" />
     </div>
   );

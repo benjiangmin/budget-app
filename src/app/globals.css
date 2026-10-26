@@ -21,6 +21,9 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-danger: var(--danger);
+  /* Corner rounding: change these two to round everything more or less. */
+  --radius-card: 18px; /* rounded-card: big panels and popups */
+  --radius-control: 12px; /* rounded-control: inputs and buttons */
   --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
   --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
 }
@@ -37,6 +40,16 @@ body {
 
 .num {
   font-variant-numeric: tabular-nums;
+}
+
+/* Hide the up/down arrows on number inputs. */
+.no-spin {
+  appearance: textfield;
+}
+.no-spin::-webkit-inner-spin-button,
+.no-spin::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 :focus-visible {

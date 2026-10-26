@@ -11,7 +11,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
       </p>
       <button
         onClick={reset}
-        className="mt-6 rounded-full bg-accent px-6 py-2.5 font-semibold text-accent-ink"
+        className="mt-6 rounded-control bg-accent px-6 py-2.5 font-semibold text-accent-ink"
       >
         Try again
       </button>

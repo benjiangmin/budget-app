@@ -9,6 +9,7 @@ import {
   shiftMonth,
 } from "@/lib/month";
 import AddEntryForm from "./AddEntryForm";
+import CategoryBreakdown from "./CategoryBreakdown";
 import EntryList from "./EntryList";
 import MonthPicker from "./MonthPicker";
 
@@ -45,22 +46,26 @@ export default async function MonthView({
 
   return (
     <>
-      <header className="flex items-center justify-between gap-4">
+      {/* Sticky espresso bar: stays pinned to the top while you scroll.
+          The outer strip covers the page behind it so content doesn't peek out above. */}
+      <div className="sticky top-0 z-30 -mx-4 -mt-3 bg-paper px-4 pb-3 pt-3">
+      <header className="flex items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
         <MonthArrow href={`/?m=${prev}`} label={`Show ${monthLabel(prev).month}`} dir="prev" />
         <div className="text-center">
           <h1>
             <MonthPicker monthKey={monthKey} label={month} />
           </h1>
           {!isThisMonth && (
-            <Link href="/" className="text-sm text-muted underline-offset-4 hover:underline">
+            <Link href="/" className="text-sm opacity-70 underline-offset-4 hover:underline hover:opacity-100">
               Jump to current month
             </Link>
           )}
         </div>
         <MonthArrow href={`/?m=${next}`} label={`Show ${monthLabel(next).month}`} dir="next" />
       </header>
+      </div>
 
-      <div className="mt-10 grid gap-10 md:grid-cols-2 md:items-start">
+      <div className="mt-7 grid gap-10 md:grid-cols-2 md:items-start">
         <section aria-label="Spending this month">
           <p className="text-sm text-muted">Spent</p>
           <p className="num font-display text-6xl font-semibold leading-none tracking-tight sm:text-7xl">
@@ -68,41 +73,9 @@ export default async function MonthView({
           </p>
 
           {rows.length > 0 ? (
-            <>
-              <div
-                key={monthKey}
-                className="strip-grow mt-6 flex h-5 w-full gap-0.5 overflow-hidden rounded-full"
-                aria-hidden="true"
-              >
-                {rows.map((r) => (
-                  <div
-                    key={r.id}
-                    style={{ flexGrow: r.spent, backgroundColor: r.color }}
-                    className="min-w-1.5"
-                  />
-                ))}
-              </div>
-
-              <ul className="mt-6 divide-y divide-line">
-                {rows.map((r) => {
-                  const pct = Math.round((r.spent / total) * 100);
-                  return (
-                    <li key={r.id} className="flex items-center gap-3 py-3">
-                      <span
-                        className="size-3 shrink-0 rounded-full"
-                        style={{ backgroundColor: r.color }}
-                        aria-hidden="true"
-                      />
-                      <span className="flex-1">{r.name}</span>
-                      <span className="num w-10 text-right text-sm text-muted">{pct}%</span>
-                      <span className="num w-24 text-right font-medium">{formatMoney(r.spent)}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
+            <CategoryBreakdown rows={rows} total={total} monthKey={monthKey} />
           ) : (
-            <p className="mt-6 rounded-2xl border border-dashed border-line px-5 py-6 text-muted">
+            <p className="mt-6 rounded-card border border-dashed border-line px-5 py-6 text-muted">
               Nothing logged for {month} yet. Add your first expense.
             </p>
           )}
@@ -121,7 +94,7 @@ function MonthArrow({ href, label, dir }: { href: string; label: string; dir: "p
     <Link
       href={href}
       aria-label={label}
-      className="grid size-11 shrink-0 place-items-center rounded-full border border-line text-ink transition-colors hover:bg-surface"
+      className="grid size-11 shrink-0 place-items-center rounded-control border border-accent-ink/20 transition-colors hover:bg-accent-ink/10"
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
