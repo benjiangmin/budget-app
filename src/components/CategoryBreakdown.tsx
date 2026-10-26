@@ -23,20 +23,26 @@ export default function CategoryBreakdown({
     <div onMouseLeave={() => setActive(null)}>
       {/* fixed-height wrapper so the hovered segment can grow without shifting the page */}
       <div className="mt-6 flex h-7 items-center">
-        {/* Every segment is its own pill with the same rounding, so hovering never reshapes the ends. */}
-        <div key={monthKey} className="strip-grow flex h-5 w-full items-center gap-1">
-          {rows.map((r) => {
+        {/* Every segment has the same small rounding, so hovering never reshapes the ends.
+            The outer div handles the load animation; the inner one handles hover. */}
+        <div key={monthKey} className="flex h-7 w-full items-center gap-1">
+          {rows.map((r, i) => {
             const on = active === r.id;
             return (
               <div
                 key={r.id}
-                onMouseEnter={() => setActive(r.id)}
-                title={`${r.name}: ${formatMoney(r.spent)}`}
-                style={{ flexGrow: r.spent, backgroundColor: r.color }}
-                className={`min-w-2 cursor-default rounded-full transition-all duration-200
-                  ${on ? "h-7 shadow-md" : "h-full"}
-                  ${someActive && !on ? "opacity-20" : ""}`}
-              />
+                className="rise flex h-7 min-w-2 items-center"
+                style={{ flexGrow: r.spent, animationDelay: `${i * 60}ms` }}
+              >
+                <div
+                  onMouseEnter={() => setActive(r.id)}
+                  title={`${r.name}: ${formatMoney(r.spent)}`}
+                  style={{ backgroundColor: r.color }}
+                  className={`w-full cursor-default rounded-[5px] transition-all duration-200
+                    ${on ? "h-7 shadow-md" : "h-5"}
+                    ${someActive && !on ? "opacity-20" : ""}`}
+                />
+              </div>
             );
           })}
         </div>

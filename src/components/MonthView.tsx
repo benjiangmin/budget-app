@@ -12,6 +12,7 @@ import AddEntryForm from "./AddEntryForm";
 import CategoryBreakdown from "./CategoryBreakdown";
 import EntryList from "./EntryList";
 import MonthPicker from "./MonthPicker";
+import SearchBar from "./SearchBar";
 
 export default async function MonthView({
   searchParams,
@@ -23,6 +24,8 @@ export default async function MonthView({
   const raw = Array.isArray(params.m) ? params.m[0] : params.m;
   const thisMonth = currentMonthKey();
   const monthKey = parseMonthKey(raw) ?? thisMonth;
+  // Set when you pick a search result: that expense gets scrolled to and highlighted.
+  const focusId = typeof params.focus === "string" ? params.focus : undefined;
 
   const [categories, entries] = await Promise.all([
     getCategories(),
@@ -46,7 +49,7 @@ export default async function MonthView({
 
   return (
     <>
-      {/* Sticky espresso bar: stays pinned to the top while you scroll.
+      {/* Sticky espresso bar + search: stay pinned to the top while you scroll.
           The outer strip covers the page behind it so content doesn't peek out above. */}
       <div className="sticky top-0 z-30 -mx-4 -mt-3 bg-paper px-4 pb-3 pt-3">
       <header className="flex items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
@@ -63,6 +66,7 @@ export default async function MonthView({
         </div>
         <MonthArrow href={`/?m=${next}`} label={`Show ${monthLabel(next).month}`} dir="next" />
       </header>
+      <SearchBar />
       </div>
 
       <div className="mt-7 grid gap-10 md:grid-cols-2 md:items-start">
@@ -84,7 +88,7 @@ export default async function MonthView({
         <AddEntryForm categories={categories} monthKey={monthKey} isThisMonth={isThisMonth} />
       </div>
 
-      <EntryList entries={entries} categories={categories} />
+      <EntryList entries={entries} categories={categories} focusId={focusId} />
     </>
   );
 }

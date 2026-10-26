@@ -57,15 +57,24 @@ body {
   outline-offset: 2px;
 }
 
-/* The one bit of motion: the spending strip grows in when a month loads. */
-@keyframes grow {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
+/* Spending bar: each segment rises up and fades in on load, one after another. */
+@keyframes rise {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
-.strip-grow {
-  transform-origin: left;
-  animation: grow 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+.rise {
+  animation: rise 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+
+/* Expense you jumped to from search: a soft highlight that fades out. */
+@keyframes flash {
+0%, 30% { background-color: #e6cfae; }  
+100%    { background-color: transparent; }
+}
+.flash {
+  animation: flash 2.4s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .strip-grow { animation: none; }
+  .rise, .flash { animation: none; }
 }

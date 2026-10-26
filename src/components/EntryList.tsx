@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { deleteEntry, updateEntry, type FormState } from "@/app/actions";
 import type { Category, Entry } from "@/lib/data";
 import { formatMoney } from "@/lib/month";
@@ -18,9 +18,11 @@ function dayParts(date: string) {
 export default function EntryList({
   entries,
   categories,
+  focusId,
 }: {
   entries: Entry[];
   categories: Category[];
+  focusId?: string; // an expense to scroll to and flash (from a search result)
 }) {
   if (entries.length === 0) return null;
 
@@ -55,6 +57,7 @@ export default function EntryList({
                     entry={e}
                     category={byId.get(e.category_id)}
                     categories={categories}
+                    focused={e.id === focusId}
                   />
                 ))}
               </ul>
@@ -70,14 +73,22 @@ function EntryRow({
   entry,
   category,
   categories,
+  focused,
 }: {
   entry: Entry;
   category?: Category;
   categories: Category[];
+  focused?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const confirm = useConfirm();
+  const rowRef = useRef<HTMLLIElement>(null);
+
+  // Arrived here from a search result: bring this row into view.
+  useEffect(() => {
+    if (focused) rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focused]);
 
   if (editing) {
     return <EditRow entry={entry} categories={categories} onDone={() => setEditing(false)} />;
@@ -93,7 +104,12 @@ function EntryRow({
   }
 
   return (
-    <li className={`group flex items-center gap-3 rounded-control py-1.5 ${pending ? "opacity-40" : ""}`}>
+    <li
+      ref={rowRef}
+      className={`group -mx-2 flex items-center gap-3 rounded-control px-2 py-1.5 ${pending ? "opacity-40" : ""} ${
+        focused ? "flash" : ""
+      }`}
+    >
       <span
         className="size-2.5 shrink-0 rounded-full"
         style={{ backgroundColor: category?.color ?? "var(--muted)" }}
