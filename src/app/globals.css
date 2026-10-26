@@ -57,6 +57,28 @@ body {
   outline-offset: 2px;
 }
 
+/* Background mascot: pinned to the bottom-right corner, faded, behind everything. */
+.mascot {
+  position: fixed;
+  right: -3vw;
+  bottom: -6vh;
+  height: 78vh; /* size */
+  width: auto;
+  opacity: 0.13; /* fade: 0 = invisible, 1 = full color */
+  transform: rotate(-8deg); /* tilt */
+  z-index: -1; /* behind the page content */
+  pointer-events: none; /* clicks go through it */
+  user-select: none;
+}
+/* Smaller on phones so it doesn't crowd the content. */
+@media (max-width: 640px) {
+  .mascot {
+    height: 20vh;
+    right: -30vw;
+    opacity: 0.1;
+  }
+}
+
 /* Spending bar: each segment rises up and fades in on load, one after another. */
 @keyframes rise {
   from { transform: translateY(8px); opacity: 0; }
@@ -68,8 +90,8 @@ body {
 
 /* Expense you jumped to from search: a soft highlight that fades out. */
 @keyframes flash {
-0%, 30% { background-color: #e6cfae; }  
-100%    { background-color: transparent; }
+  0%, 30% { background-color: #e6cfae; }
+  100%    { background-color: transparent; }
 }
 .flash {
   animation: flash 2.4s ease-out both;
