@@ -37,10 +37,10 @@ export default function EntryList({
   return (
     // The bordered panel: rounded top, open bottom, runs to the bottom of the page.
     // Border thickness: change border-[1.5px] (and border-t-[1.5px]) below.
-    // overflow-clip trims the mascots at the border without breaking their pinning.
+    // overflow-clip trims the mascots at the border.
     <section
       aria-labelledby="entries-heading"
-      className="relative mt-12 flex min-h-[55vh] flex-1 flex-col overflow-clip rounded-t-card border-[1.5px] border-b-0 border-ink px-4 pt-5 sm:px-6"
+      className="relative mt-12 flex min-h-40 flex-1 flex-col overflow-clip rounded-t-card border-[1.5px] border-b-0 border-ink px-4 pt-5 sm:px-6"
     >
       <div className="relative z-10">
         <h2 id="entries-heading" className="font-display text-xl font-semibold">
@@ -80,11 +80,12 @@ export default function EntryList({
         )}
       </div>
 
-      {/* Mascot layer. mt-auto pushes it to the bottom of the panel; "sticky bottom-0" keeps it
-          pinned to the bottom of the screen while the panel is in view. It has no height, so the
-          mascots hang upward from it, behind the list (z-0 vs the list's z-10).
+      {/* Mascot layer. mt-auto pushes it to the bottom of the panel, so the mascots ride at the end
+          of the list. The panel always reaches at least the bottom of the screen (flex-1 inside a
+          full-height page), so on short lists they sit at the bottom of the screen instead.
+          It has no height, so the mascots hang upward from it, behind the list (z-0 vs z-10).
           Tweak size/position/fade in the .mascot rules in globals.css. */}
-      <div aria-hidden="true" className="pointer-events-none sticky bottom-0 z-0 mt-auto h-0">
+      <div aria-hidden="true" className="pointer-events-none relative z-0 mt-auto h-0">
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
         <img src="/gimmighoul.png" alt="" className="mascot mascot-left" />
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
@@ -131,7 +132,7 @@ function EntryRow({
   return (
     <li
       ref={rowRef}
-      className={`group -mx-2 flex items-center gap-3 rounded-control px-2 py-1.5 ${pending ? "opacity-40" : ""} ${
+      className={`group -mx-2 flex items-center gap-3 rounded-control px-2 py-0.5 ${pending ? "opacity-40" : ""} ${
         focused ? "flash" : ""
       }`}
     >
@@ -140,17 +141,21 @@ function EntryRow({
         style={{ backgroundColor: category?.color ?? "var(--muted)" }}
         aria-hidden="true"
       />
-      <p className="flex min-w-0 flex-1 items-baseline gap-2">
-        <span className="truncate font-semibold text-black">{entry.note || category?.name || "Expense"}</span>        {entry.note && <span className="shrink-0 text-sm text-muted">{category?.name}</span>}
-      </p>
-      <span className="num font-medium">{formatMoney(entry.amount)}</span>
+      {/* Solid box behind the note + price so the mascots don't show through.
+          Color: bg-surface. Rounding: rounded-[8px]. Inner spacing: px-3 py-2.5. */}
+      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[8px] bg-surface px-3 py-2.5">
+        <p className="flex min-w-0 flex-1 items-baseline gap-2">
+          <span className="truncate text-black">{entry.note || category?.name || "Expense"}</span>        {entry.note && <span className="shrink-0 text-sm text-muted">{category?.name}</span>}
+        </p>
+        <span className="num font-medium">{formatMoney(entry.amount)}</span>
+      </div>
       <div className="flex">
         <button
           type="button"
           disabled={pending}
           onClick={() => setEditing(true)}
           aria-label={`Edit ${formatMoney(entry.amount)} ${category?.name ?? ""} expense`}
-          className="grid size-7 place-items-center rounded-control text-muted opacity-50 transition hover:bg-surface hover:text-ink group-hover:opacity-100"
+          className="grid size-7 place-items-center rounded-control text-muted opacity-50 transition hover:bg-surface hover:text-ink group-hover:opacity-100 group-hover:text-black"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
@@ -167,7 +172,7 @@ function EntryRow({
           disabled={pending}
           onClick={remove}
           aria-label={`Delete ${formatMoney(entry.amount)} ${category?.name ?? ""} expense`}
-          className="grid size-7 place-items-center rounded-control text-muted opacity-50 transition hover:bg-surface hover:text-danger group-hover:opacity-100"
+          className="grid size-7 place-items-center rounded-control text-muted opacity-50 transition hover:bg-surface hover:text-danger! group-hover:opacity-100 group-hover:text-black"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

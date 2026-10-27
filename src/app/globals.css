@@ -67,7 +67,7 @@ body {
   max-width: 45%;
   object-fit: contain;
   object-position: right bottom; /* hug the right edge */
-  opacity: 0.2;
+  opacity: 0.4;
   transform: rotate(-8deg);
   pointer-events: none;
   user-select: none;
