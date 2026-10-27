@@ -54,7 +54,7 @@ export default async function GratitudeView({
       </StickyTop>
 
       {/* Writing box. z-[25] keeps its date picker above the entries but under the month bar. */}
-      <section aria-label="New entry" className="relative z-[25] mt-4 shrink-0 rounded-card bg-surface p-5 sm:p-6">
+      <section aria-label="New entry" className="relative z-[25] mt-4 shrink-0 rounded-card bg-surface p-4 sm:px-5">
         <GratitudeForm defaultDate={isThisMonth ? undefined : `${monthKey}-01`} />
       </section>
 

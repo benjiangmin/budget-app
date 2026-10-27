@@ -4,10 +4,9 @@ import GratitudeView from "@/components/gratitude/GratitudeView";
 
 export default function GratitudePage(props: PageProps<"/gratitude">) {
   return (
-    // On laptop-size screens and up (md:), the page is exactly one screen tall so the entries
-    // box can fill the leftover space and scroll inside itself. On small screens the page
-    // just scrolls normally.
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pb-6 pt-8 sm:pt-10 md:h-dvh">
+    // At least one screen tall. The entries box fills whatever space is left and scrolls inside
+    // itself; on short screens the page scrolls a little instead of the box spilling over.
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pb-6 pt-8 sm:pt-10">
       <Link href="/" className="mb-4 inline-block text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
         ← All documents
       </Link>

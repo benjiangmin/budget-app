@@ -32,29 +32,29 @@ export default function GratitudeList({
 
   return (
     // The bordered box: closed on all four sides, fills the rest of the screen, and scrolls
-    // inside itself. Border thickness: border-[1.5px]. min-h-[18rem] = never shorter than this; if the
+    // inside itself. Border thickness: border-[1.5px]. min-h-[30rem] = never shorter than this (about 3 entries); if the
     // screen is too short to fit everything, the page scrolls a little instead of squashing the box.
     <section
       aria-labelledby="entries-heading"
-      className="relative mt-6 flex min-h-[18rem] flex-1 flex-col overflow-hidden rounded-card border-[1.5px] border-ink"
+      className="relative mt-6 flex min-h-[30rem] flex-1 basis-0 flex-col overflow-hidden rounded-card border-[1.5px] border-ink"
     >
       {/* Mascots, pinned to the box's corners (they stay put while the entries scroll past).
-          Each is sized as a share of the box, nudged past the edges, and trimmed by the border.
-          Tweak per image: h-[..] = size, max-w-[..] = widest it can get, top/right/bottom/left
+          Fixed sizes, so they look the same whatever the box height. Trimmed by the border.
+          Tweak per image: w-.. = size (sm:w-.. on bigger screens), top/right/bottom/left
           = position (negative pushes it past the edge), opacity-.. = fade, rotate-.. = tilt. */}
       {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
       <img
         src="/shaymin-sky.png"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute right-[-12%] top-14 h-[40%] max-w-[36%] select-none object-contain object-right-top opacity-70 -rotate-6"
+        className="pointer-events-none absolute -right-10 top-16 w-36 select-none opacity-70 -rotate-6 sm:w-44"
       />
       {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
       <img
         src="/shaymin-land.png"
         alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-[-5%] left-[-15%] h-[42%] max-w-[30%] select-none object-contain object-left-bottom opacity-70 rotate-3 -scale-x-100"
+        className="pointer-events-none absolute -bottom-6 -left-10 w-40 select-none opacity-70 rotate-3 -scale-x-100 sm:w-48"
       />
 
       {/* Header: always visible at the top of the box. */}

@@ -47,17 +47,17 @@ export default function GratitudeForm({
       {entry && <input type="hidden" name="id" value={entry.id} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold">{editing ? "Edit entry" : "Three good things"}</h2>
+        <h2 className="font-display text-lg font-semibold">{editing ? "Edit entry" : "Three good things"}</h2>
         <div className="w-44">
           <DateWheel key={date} name="entry_date" defaultValue={date} />
         </div>
       </div>
 
       {/* Journal lines: a big cinnamon numeral, then an underlined line to write on. */}
-      <ol className="mt-4 space-y-1">
+      <ol className="mt-2">
         {SLOTS.map((slot, i) => (
           <li key={slot} className="flex items-baseline gap-3">
-            <span aria-hidden="true" className="num w-6 shrink-0 font-display text-2xl font-semibold text-accent">
+            <span aria-hidden="true" className="num w-6 shrink-0 font-display text-xl font-semibold text-accent">
               {i + 1}
             </span>
             <input
@@ -70,7 +70,7 @@ export default function GratitudeForm({
               defaultValue={entry?.[slot] ?? ""}
               placeholder={PLACEHOLDERS[i]}
               aria-label={`Thing ${i + 1}`}
-              className="w-full border-b-2 border-line bg-transparent py-2.5 text-ink placeholder:text-muted/70 focus:border-ink"
+              className="w-full border-b-2 border-line bg-transparent py-1.5 text-ink placeholder:text-muted/70 focus:border-ink"
               // No focus box: the underline turning dark shows which line you're on.
               style={{ outline: "none" }}
             />
@@ -78,11 +78,11 @@ export default function GratitudeForm({
         ))}
       </ol>
 
-      <div className="mt-5 flex items-center gap-3">
+      <div className="mt-3 flex items-center gap-3">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-control bg-accent px-5 py-2.5 font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="rounded-control bg-accent px-5 py-2 font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {pending ? "Saving…" : editing ? "Save changes" : "Save entry"}
         </button>
