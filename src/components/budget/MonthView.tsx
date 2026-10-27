@@ -70,7 +70,7 @@ export default async function MonthView({
       <SearchBar />
       </StickyTop>
 
-      <div className="mt-7 grid gap-10 md:grid-cols-2 md:items-start">
+      <div className="relative z-[25] mt-7 grid gap-10 md:grid-cols-2 md:items-start">        
         <section aria-label="Spending this month">
           <p className="text-sm text-muted">Spent</p>
           <p className="num font-display text-6xl font-semibold leading-none tracking-tight sm:text-7xl">
