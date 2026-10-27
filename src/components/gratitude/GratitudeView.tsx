@@ -32,7 +32,7 @@ export default async function GratitudeView({
   return (
     <>
       {/* Month bar + search, pinned to the top while you scroll. */}
-      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 bg-paper px-4 pb-3 pt-3">
+      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-3 pt-3">
         <header className="flex items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
           <MonthArrow href={`/gratitude?m=${prev}`} label={`Show ${monthLabel(prev).month}`} dir="prev" />
           <div className="text-center">
@@ -54,23 +54,11 @@ export default async function GratitudeView({
       </StickyTop>
 
       {/* Writing box. z-[25] keeps its date picker above the entries but under the month bar. */}
-      <section aria-label="New entry" className="relative z-[25] mt-6 rounded-card bg-surface p-5 sm:p-6">
+      <section aria-label="New entry" className="relative z-[25] mt-4 shrink-0 rounded-card bg-surface p-5 sm:p-6">
         <GratitudeForm defaultDate={isThisMonth ? undefined : `${monthKey}-01`} />
       </section>
 
-      <section aria-labelledby="entries-heading" className="mt-10 pb-16">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 id="entries-heading" className="font-display text-xl font-semibold">
-            {month}
-          </h2>
-          {daysLogged > 0 && (
-            <p className="text-sm text-muted">
-              {daysLogged} {daysLogged === 1 ? "day" : "days"} of good things
-            </p>
-          )}
-        </div>
-        <GratitudeList entries={entries} monthName={month} focusId={focusId} />
-      </section>
+      <GratitudeList entries={entries} monthName={month} daysLogged={daysLogged} focusId={focusId} />
     </>
   );
 }

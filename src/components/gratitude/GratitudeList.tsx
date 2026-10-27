@@ -20,26 +20,61 @@ function dateParts(date: string) {
 export default function GratitudeList({
   entries,
   monthName,
+  daysLogged,
   focusId,
 }: {
   entries: GratitudeEntry[];
   monthName: string;
+  daysLogged: number;
   focusId?: string; // an entry to scroll to and flash (from a search result)
 }) {
-  if (entries.length === 0) {
-    return (
-      <p className="rounded-card border border-dashed border-line px-5 py-6 text-muted">
-        Nothing yet for {monthName}. What are three good things from today?
-      </p>
-    );
-  }
+  const [scrolled, setScrolled] = useState(false); // shows the fade under the header
 
   return (
-    <ul className="space-y-3">
-      {entries.map((e) => (
-        <EntryCard key={e.id} entry={e} focused={e.id === focusId} />
-      ))}
-    </ul>
+    // The bordered box: closed on all four sides, fills the rest of the screen, and scrolls
+    // inside itself. Border thickness: border-[1.5px]. min-h-[18rem] = never shorter than this; if the
+    // screen is too short to fit everything, the page scrolls a little instead of squashing the box.
+    <section
+      aria-labelledby="entries-heading"
+      className="relative mt-6 flex min-h-[18rem] flex-1 flex-col overflow-hidden rounded-card border-[1.5px] border-ink"
+    >
+      {/* Header: always visible at the top of the box. */}
+      <div className="relative z-10 flex shrink-0 items-baseline justify-between gap-3 bg-paper px-5 pb-3 pt-4 sm:px-6">
+        <h2 id="entries-heading" className="font-display text-xl font-semibold">
+          {monthName}
+        </h2>
+        {daysLogged > 0 && (
+          <p className="text-sm text-muted">
+            {daysLogged} {daysLogged === 1 ? "day" : "days"} of good things
+          </p>
+        )}
+        {/* Fade under the header once the entries have scrolled. Height: h-6. */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-0 top-full h-6 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
+            scrolled ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
+
+      {/* The scrolling part. */}
+      <div
+        onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
+        className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5"
+      >
+        {entries.length === 0 ? (
+          <p className="mt-1 rounded-card border border-dashed border-line px-5 py-6 text-muted">
+            Nothing yet for {monthName}. What are three good things from today?
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {entries.map((e) => (
+              <EntryCard key={e.id} entry={e} focused={e.id === focusId} />
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
   );
 }
 
