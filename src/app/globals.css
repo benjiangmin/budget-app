@@ -91,10 +91,9 @@ body {
   animation: rise 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* Expense you jumped to from search: a soft highlight that fades out. */
 @keyframes flash {
-  0%, 30% { background-color: #e6cfae; }
-  100%    { background-color: transparent; }
+  0%, 30% { background-color: #d4a373; } /* caramel: the highlight color */
+  100%    { background-color: var(--surface); } /* fades back to the box's normal color */
 }
 .flash {
   animation: flash 2.4s ease-out both;

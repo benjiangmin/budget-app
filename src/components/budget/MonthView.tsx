@@ -13,6 +13,7 @@ import CategoryBreakdown from "./CategoryBreakdown";
 import EntryList from "./EntryList";
 import MonthPicker from "@/components/ui/MonthPicker";
 import SearchBar from "./SearchBar";
+import StickyTop from "@/components/ui/StickyTop";
 
 export default async function MonthView({
   searchParams,
@@ -51,7 +52,7 @@ export default async function MonthView({
     <>
       {/* Sticky espresso bar + search: stay pinned to the top while you scroll.
           The outer strip covers the page behind it so content doesn't peek out above. */}
-      <div className="sticky top-0 z-30 -mx-4 -mt-3 bg-paper px-4 pb-3 pt-3">
+      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 bg-paper px-4 pb-3 pt-3">
       <header className="flex items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
         <MonthArrow href={`/budget?m=${prev}`} label={`Show ${monthLabel(prev).month}`} dir="prev" />
         <div className="text-center">
@@ -67,7 +68,7 @@ export default async function MonthView({
         <MonthArrow href={`/budget?m=${next}`} label={`Show ${monthLabel(next).month}`} dir="next" />
       </header>
       <SearchBar />
-      </div>
+      </StickyTop>
 
       <div className="mt-7 grid gap-10 md:grid-cols-2 md:items-start">
         <section aria-label="Spending this month">

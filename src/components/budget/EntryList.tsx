@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/month";
 import CategoryPicker from "./CategoryPicker";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import DateWheel from "@/components/ui/DateWheel";
+import { useIsStuck } from "@/components/ui/useIsStuck";
 
 // "2026-10-22" → { day: "22", weekday: "Thu" }
 function dayParts(date: string) {
@@ -26,6 +27,7 @@ export default function EntryList({
   focusId?: string; // an expense to scroll to and flash (from a search result)
   monthName: string; // e.g. "October", for the empty message
 }) {
+  const [headingRef, headingStuck] = useIsStuck<HTMLDivElement>(); // for the fade under the heading
   const byId = new Map(categories.map((c) => [c.id, c]));
   const days: { date: string; items: Entry[] }[] = [];
   for (const e of entries) {
@@ -35,25 +37,52 @@ export default function EntryList({
   }
 
   return (
-    // The bordered panel: rounded top, open bottom, runs to the bottom of the page.
-    // Border thickness: change border-[1.5px] (and border-t-[1.5px]) below.
-    // overflow-clip trims the mascots at the border.
-    <section
-      aria-labelledby="entries-heading"
-      className="relative mt-12 flex min-h-40 flex-1 flex-col overflow-clip rounded-t-card border-[1.5px] border-b-0 border-ink px-4 pt-5 sm:px-6"
-    >
-      <div className="relative z-10">
-        <h2 id="entries-heading" className="font-display text-xl font-semibold">
+    // The bordered panel, in two stacked parts that share the same side borders:
+    //  1. the heading, which carries the rounded top border and sticks under the month bar
+    //  2. the list, with side borders only, running to the bottom of the page
+    // Border thickness: change every border-[1.5px] / border-x-[1.5px] below.
+    <div className="mt-12 flex flex-1 flex-col">
+      {/* Sticks just under the month bar while you scroll (--sticky-top is the bar's height,
+          measured by StickyTop). Its own rounded top border means the top line stays visible
+          while it's stuck. The paper background hides rows passing under it. */}
+      {/* The square paper backing hides the list's side lines behind the heading's rounded corners. */}
+      {/* data-stick-under tells the month bar's fade to hide once this is stuck right under it. */}
+      <div
+        ref={headingRef}
+        data-stick-under
+        className="sticky z-20 bg-paper"
+        style={{ top: "var(--sticky-top, 0px)" }}
+      >
+        <h2
+          id="entries-heading"
+          className="rounded-t-card border-[1.5px] border-b-0 border-ink px-4 pb-2 pt-5 font-display text-xl font-semibold sm:px-6"
+        >
           Expenses
         </h2>
+        {/* Fade under the heading while it's stuck and the list scrolls beneath it.
+            Inset 1.5px on each side so it stays inside the border. Height: h-6. */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-[1.5px] top-full h-6 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
+            headingStuck ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
+
+      {/* overflow-clip trims the mascots at the border. */}
+      <section
+        aria-labelledby="entries-heading"
+        className="relative flex min-h-40 flex-1 flex-col overflow-clip border-x-[1.5px] border-ink px-4 sm:px-6"
+      >
+      <div className="relative z-10">
 
         {entries.length === 0 ? (
-          <p className="mt-4 rounded-card border border-dashed border-line px-5 py-6 text-muted">
+          <p className="mt-2 rounded-card border border-dashed border-line px-5 py-6 text-muted">
             Nothing logged for {monthName} yet.
           </p>
         ) : (
           /* One block per day: the date sits in a left column, that day's expenses to the right. */
-          <ol className="mt-3 border-b border-line pb-6">
+          <ol className="mt-1 border-b border-line pb-6">
             {days.map((day) => {
               const { day: d, weekday } = dayParts(day.date);
               return (
@@ -91,7 +120,8 @@ export default function EntryList({
         {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
         <img src="/gholdengo.png" alt="" className="mascot" />
       </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -132,9 +162,7 @@ function EntryRow({
   return (
     <li
       ref={rowRef}
-      className={`group -mx-2 flex items-center gap-3 rounded-control px-2 py-0.5 ${pending ? "opacity-40" : ""} ${
-        focused ? "flash" : ""
-      }`}
+      className={`group -mx-2 flex items-center gap-3 rounded-control px-2 py-0.5 ${pending ? "opacity-40" : ""}`}
     >
       <span
         className="size-2.5 shrink-0 rounded-full"
@@ -143,7 +171,11 @@ function EntryRow({
       />
       {/* Solid box behind the note + price so the mascots don't show through.
           Color: bg-surface. Rounding: rounded-[8px]. Inner spacing: px-3 py-2.5. */}
-      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-[8px] bg-surface px-3 py-2.5">
+      <div
+        className={`flex min-w-0 flex-1 items-center gap-3 rounded-[8px] bg-surface px-3 py-2.5 ${
+          focused ? "flash" : "" /* jumped here from search: the box flashes caramel */
+        }`}
+      >
         <p className="flex min-w-0 flex-1 items-baseline gap-2">
           <span className="truncate text-black">{entry.note || category?.name || "Expense"}</span>        {entry.note && <span className="shrink-0 text-sm text-muted">{category?.name}</span>}
         </p>
