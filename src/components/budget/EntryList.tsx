@@ -69,10 +69,12 @@ export default function EntryList({
         />
       </div>
 
-      {/* overflow-clip trims the mascots at the border. */}
+      {/* overflow-clip trims the mascots at the border.
+          min-h-[52vh]: the box is never shorter than Gholdengo (50vh tall, 5vh hidden below), so his
+          head never gets cut off. If you change .mascot's height in globals.css, update this too. */}
       <section
         aria-labelledby="entries-heading"
-        className="relative flex min-h-40 flex-1 flex-col overflow-clip border-x-[1.5px] border-ink px-4 sm:px-6"
+        className="relative flex min-h-[52vh] flex-1 flex-col overflow-clip border-x-[1.5px] border-ink px-4 sm:px-6"
       >
       <div className="relative z-10">
 
