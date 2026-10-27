@@ -70,7 +70,9 @@ export default function GratitudeForm({
               defaultValue={entry?.[slot] ?? ""}
               placeholder={PLACEHOLDERS[i]}
               aria-label={`Thing ${i + 1}`}
-              className="w-full border-b-2 border-line bg-transparent py-2.5 text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none focus-visible:outline-none"
+              className="w-full border-b-2 border-line bg-transparent py-2.5 text-ink placeholder:text-muted/70 focus:border-ink"
+              // No focus box: the underline turning dark shows which line you're on.
+              style={{ outline: "none" }}
             />
           </li>
         ))}

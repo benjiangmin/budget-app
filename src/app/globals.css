@@ -102,3 +102,21 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rise, .flash { animation: none; }
 }
+
+/* Scrollbars everywhere: slim and coffee-colored. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+/* Same look for Safari, which ignores the two lines above. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

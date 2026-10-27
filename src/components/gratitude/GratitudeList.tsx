@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { deleteGratitude } from "@/app/gratitude/actions";
 import type { GratitudeEntry } from "@/lib/gratitude";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
@@ -38,6 +38,25 @@ export default function GratitudeList({
       aria-labelledby="entries-heading"
       className="relative mt-6 flex min-h-[18rem] flex-1 flex-col overflow-hidden rounded-card border-[1.5px] border-ink"
     >
+      {/* Mascots, pinned to the box's corners (they stay put while the entries scroll past).
+          Each is sized as a share of the box, nudged past the edges, and trimmed by the border.
+          Tweak per image: h-[..] = size, max-w-[..] = widest it can get, top/right/bottom/left
+          = position (negative pushes it past the edge), opacity-.. = fade, rotate-.. = tilt. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/shaymin-sky.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute right-[-12%] top-14 h-[40%] max-w-[36%] select-none object-contain object-right-top opacity-70 -rotate-6"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/shaymin-land.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-[-5%] left-[-15%] h-[42%] max-w-[30%] select-none object-contain object-left-bottom opacity-70 rotate-3 -scale-x-100"
+      />
+
       {/* Header: always visible at the top of the box. */}
       <div className="relative z-10 flex shrink-0 items-baseline justify-between gap-3 bg-paper px-5 pb-3 pt-4 sm:px-6">
         <h2 id="entries-heading" className="font-display text-xl font-semibold">
@@ -59,15 +78,15 @@ export default function GratitudeList({
 
       {/* The scrolling part. */}
       <div
+        data-scroller
         onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
-        className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5"
-      >
+        className="relative z-[1] min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5 [scrollbar-width:thin] [scrollbar-color:var(--line)_transparent]"      >
         {entries.length === 0 ? (
           <p className="mt-1 rounded-card border border-dashed border-line px-5 py-6 text-muted">
             Nothing yet for {monthName}. What are three good things from today?
           </p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="divide-y-[3px] divide-ink/30">
             {entries.map((e) => (
               <EntryCard key={e.id} entry={e} focused={e.id === focusId} />
             ))}
@@ -85,9 +104,15 @@ function EntryCard({ entry, focused }: { entry: GratitudeEntry; focused: boolean
   const ref = useRef<HTMLLIElement>(null);
   const { day, weekday, short } = dateParts(entry.entry_date);
 
-  // Arrived here from a search result: bring this entry into view.
+  // Arrived here from a search result: scroll the box (not the page) so this entry is centered.
   useEffect(() => {
-    if (focused) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const el = ref.current;
+    const scroller = el?.closest<HTMLElement>("[data-scroller]");
+    if (!focused || !el || !scroller) return;
+    scroller.scrollTo({
+      top: el.offsetTop - scroller.clientHeight / 2 + el.offsetHeight / 2,
+      behavior: "smooth",
+    });
   }, [focused]);
 
   async function remove() {
@@ -101,7 +126,7 @@ function EntryCard({ entry, focused }: { entry: GratitudeEntry; focused: boolean
 
   if (editing) {
     return (
-      <li className="rounded-card bg-surface p-4 sm:p-5">
+      <li className="my-2 rounded-card bg-surface p-4 sm:p-5">
         <GratitudeForm entry={entry} onDone={() => setEditing(false)} />
       </li>
     );
@@ -110,9 +135,11 @@ function EntryCard({ entry, focused }: { entry: GratitudeEntry; focused: boolean
   return (
     <li
       ref={ref}
-      className={`group flex gap-3 rounded-card bg-surface p-4 transition-opacity sm:gap-5 sm:p-5 ${pending ? "opacity-40" : ""} ${
-        focused ? "flash" : ""
+      className={`group flex gap-3 px-2 py-4 transition-opacity sm:gap-5 sm:px-3 ${pending ? "opacity-40" : ""} ${
+        focused ? "flash rounded-control" : ""
       }`}
+      // The flash normally fades back to the oat box color; these entries have no box, so fade to clear.
+      style={focused ? ({ "--surface": "transparent" } as CSSProperties) : undefined}
     >
       {/* Date: big day number, weekday under it. */}
       <div className="w-10 shrink-0 text-center sm:w-14">
