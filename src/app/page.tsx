@@ -10,7 +10,7 @@ const GROUPS: { name: string; docs: { title: string; blurb: string; href: string
   {
     name: "Reflection",
     docs: [
-      { title: "Gratitude", blurb: "Three good things, every day.", href: null },
+      { title: "Gratitude", blurb: "Three good things, every day.", href: "/gratitude" },
       { title: "Journal", blurb: "Whatever's on my mind.", href: null },
     ],
   },
