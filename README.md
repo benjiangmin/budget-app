@@ -41,3 +41,4 @@ supabase/schema.sql         tables, RLS, starter categories
 
 There's no login yet. That's fine on localhost, but add Supabase Auth (and a `user_id` column) before putting this on Vercel, or anyone with the URL can add and delete entries.
 Update test
+Update test
