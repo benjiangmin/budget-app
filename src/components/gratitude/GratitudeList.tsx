@@ -64,7 +64,7 @@ export default function GratitudeList({
         </h2>
         {daysLogged > 0 && (
           <p className="text-sm text-muted">
-            {daysLogged} {daysLogged === 1 ? "day" : "days"} of good things
+            {daysLogged} {daysLogged === 1 ? "day" : "days"} of remembering to do ts
           </p>
         )}
         {/* Fade under the header once the entries have scrolled. Height: h-6. */}
