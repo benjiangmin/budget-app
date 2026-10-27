@@ -19,13 +19,13 @@ export default function EntryList({
   entries,
   categories,
   focusId,
+  monthName,
 }: {
   entries: Entry[];
   categories: Category[];
   focusId?: string; // an expense to scroll to and flash (from a search result)
+  monthName: string; // e.g. "October", for the empty message
 }) {
-  if (entries.length === 0) return null;
-
   const byId = new Map(categories.map((c) => [c.id, c]));
   const days: { date: string; items: Entry[] }[] = [];
   for (const e of entries) {
@@ -35,36 +35,61 @@ export default function EntryList({
   }
 
   return (
-    <section aria-labelledby="entries-heading" className="mt-12">
-      <h2 id="entries-heading" className="font-display text-xl font-semibold">
-        Expenses
-      </h2>
+    // The bordered panel: rounded top, open bottom, runs to the bottom of the page.
+    // Border thickness: change border-[1.5px] (and border-t-[1.5px]) below.
+    // overflow-clip trims the mascots at the border without breaking their pinning.
+    <section
+      aria-labelledby="entries-heading"
+      className="relative mt-12 flex min-h-[55vh] flex-1 flex-col overflow-clip rounded-t-card border-[1.5px] border-b-0 border-ink px-4 pt-5 sm:px-6"
+    >
+      <div className="relative z-10">
+        <h2 id="entries-heading" className="font-display text-xl font-semibold">
+          Expenses
+        </h2>
 
-      {/* One block per day: the date sits in a left column, that day's expenses to the right. */}
-      <ol className="mt-3 border-b border-line">
-        {days.map((day) => {
-          const { day: d, weekday } = dayParts(day.date);
-          return (
-            <li key={day.date} className="flex gap-4 border-t border-line py-2">
-              <div className="w-10 shrink-0 pt-1.5 text-center">
-                <div className="num font-display text-xl font-semibold leading-none">{d}</div>
-                <div className="mt-1 text-xs text-muted">{weekday}</div>
-              </div>
-              <ul className="min-w-0 flex-1">
-                {day.items.map((e) => (
-                  <EntryRow
-                    key={e.id}
-                    entry={e}
-                    category={byId.get(e.category_id)}
-                    categories={categories}
-                    focused={e.id === focusId}
-                  />
-                ))}
-              </ul>
-            </li>
-          );
-        })}
-      </ol>
+        {entries.length === 0 ? (
+          <p className="mt-4 rounded-card border border-dashed border-line px-5 py-6 text-muted">
+            Nothing logged for {monthName} yet.
+          </p>
+        ) : (
+          /* One block per day: the date sits in a left column, that day's expenses to the right. */
+          <ol className="mt-3 border-b border-line pb-6">
+            {days.map((day) => {
+              const { day: d, weekday } = dayParts(day.date);
+              return (
+                <li key={day.date} className="flex gap-4 border-t border-line py-2">
+                  <div className="w-10 shrink-0 pt-1.5 text-center">
+                    <div className="num font-display text-xl font-semibold leading-none">{d}</div>
+                    <div className="mt-1 text-xs text-muted">{weekday}</div>
+                  </div>
+                  <ul className="min-w-0 flex-1">
+                    {day.items.map((e) => (
+                      <EntryRow
+                        key={e.id}
+                        entry={e}
+                        category={byId.get(e.category_id)}
+                        categories={categories}
+                        focused={e.id === focusId}
+                      />
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </div>
+
+      {/* Mascot layer. mt-auto pushes it to the bottom of the panel; "sticky bottom-0" keeps it
+          pinned to the bottom of the screen while the panel is in view. It has no height, so the
+          mascots hang upward from it, behind the list (z-0 vs the list's z-10).
+          Tweak size/position/fade in the .mascot rules in globals.css. */}
+      <div aria-hidden="true" className="pointer-events-none sticky bottom-0 z-0 mt-auto h-0">
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+        <img src="/gimmighoul.png" alt="" className="mascot mascot-left" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+        <img src="/gholdengo.png" alt="" className="mascot" />
+      </div>
     </section>
   );
 }
@@ -116,8 +141,7 @@ function EntryRow({
         aria-hidden="true"
       />
       <p className="flex min-w-0 flex-1 items-baseline gap-2">
-        <span className="truncate">{entry.note || category?.name || "Expense"}</span>
-        {entry.note && <span className="shrink-0 text-sm text-muted">{category?.name}</span>}
+        <span className="truncate font-semibold text-black">{entry.note || category?.name || "Expense"}</span>        {entry.note && <span className="shrink-0 text-sm text-muted">{category?.name}</span>}
       </p>
       <span className="num font-medium">{formatMoney(entry.amount)}</span>
       <div className="flex">

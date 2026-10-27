@@ -4,7 +4,7 @@ import MonthView from "@/components/budget/MonthView";
 
 export default function Page(props: PageProps<"/budget">) {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 pb-24 pt-8 sm:pt-14">
+    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 pt-8 sm:pt-14">
       <Link href="/" className="mb-4 inline-block text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
         ← All documents
       </Link>

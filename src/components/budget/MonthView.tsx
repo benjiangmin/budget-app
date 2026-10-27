@@ -88,7 +88,7 @@ export default async function MonthView({
         <AddEntryForm categories={categories} monthKey={monthKey} isThisMonth={isThisMonth} />
       </div>
 
-      <EntryList entries={entries} categories={categories} focusId={focusId} />
+      <EntryList entries={entries} categories={categories} focusId={focusId} monthName={month} />
     </>
   );
 }
