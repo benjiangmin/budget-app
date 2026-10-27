@@ -1,4 +1,4 @@
-import { searchEntries } from "@/lib/data";
+import { searchEntries } from "@/lib/budget";
 import { MIN_SEARCH_LENGTH } from "@/lib/search-config";
 
 // GET /api/search?q=coffee  →  { results: [...] }

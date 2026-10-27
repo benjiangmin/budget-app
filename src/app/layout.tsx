@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/instrument-sans";
 import "./globals.css";
-import { ConfirmProvider } from "@/components/ConfirmDialog";
+import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 
 export const metadata: Metadata = {
   title: "Budget",

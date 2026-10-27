@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SearchHit } from "@/lib/data";
+import type { SearchHit } from "@/lib/budget";
 import { formatMoney } from "@/lib/month";
 import { MIN_SEARCH_LENGTH } from "@/lib/search-config";
 
@@ -45,7 +45,7 @@ export default function SearchBar() {
     const timer = setTimeout(async () => {
       setStatus("loading");
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        const res = await fetch(`/api/budget/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
         const json = await res.json();
         setResults(json.results ?? []);
         setCursor(0);
@@ -73,7 +73,7 @@ export default function SearchBar() {
   function go(hit: SearchHit) {
     setOpen(false);
     setQuery("");
-    router.push(`/?m=${hit.spent_on.slice(0, 7)}&focus=${hit.id}`);
+    router.push(`/budget?m=${hit.spent_on.slice(0, 7)}&focus=${hit.id}`);
   }
 
   const showPanel = open && !tooShort;

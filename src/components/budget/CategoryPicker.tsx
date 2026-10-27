@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { createCategory, deleteCategory, updateCategory } from "@/app/actions";
-import type { Category } from "@/lib/data";
-import { useConfirm } from "./ConfirmDialog";
-import { PickerButton, PopoverPanel, usePopover } from "./Wheel";
+import { createCategory, deleteCategory, updateCategory } from "@/app/budget/actions";
+import type { Category } from "@/lib/budget";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { PickerButton, PopoverPanel, usePopover } from "@/components/ui/Wheel";
 
 // Colors offered for categories.
 const SWATCHES = ["#6F8F5E", "#C48A4A", "#5E7C8C", "#7A4E36", "#B5655A", "#D9B26C", "#8A6F9E", "#A39282"];

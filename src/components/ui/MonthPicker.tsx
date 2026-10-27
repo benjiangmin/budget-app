@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function MonthPicker({ monthKey, label }: { monthKey: string; label: string }) {
   const router = useRouter();
+  const pathname = usePathname(); // stay on whichever page uses this picker
   const [selYear, selMonth] = monthKey.split("-").map(Number);
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(selYear);
@@ -29,7 +30,7 @@ export default function MonthPicker({ monthKey, label }: { monthKey: string; lab
 
   function go(month: number) {
     setOpen(false);
-    router.push(`/?m=${year}-${String(month).padStart(2, "0")}`);
+    router.push(`${pathname}?m=${year}-${String(month).padStart(2, "0")}`);
   }
 
   return (

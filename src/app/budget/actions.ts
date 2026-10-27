@@ -41,7 +41,7 @@ export async function addEntry(_prev: FormState, formData: FormData): Promise<Fo
   const res = await db().from("entries").insert(values);
   if (res.error) return { ok: false, message: `Couldn't save: ${res.error.message}` };
 
-  revalidatePath("/");
+  revalidatePath("/budget");
   return { ok: true, message: null, savedAt: Date.now() };
 }
 
@@ -56,7 +56,7 @@ export async function updateEntry(_prev: FormState, formData: FormData): Promise
   const res = await db().from("entries").update(values).eq("id", id);
   if (res.error) return { ok: false, message: `Couldn't save: ${res.error.message}` };
 
-  revalidatePath("/");
+  revalidatePath("/budget");
   return { ok: true, message: null, savedAt: Date.now() };
 }
 
@@ -88,7 +88,7 @@ export async function createCategory(name: string, color: string): Promise<NewCa
     return { ok: false, message: taken ? `"${clean}" already exists.` : `Couldn't add: ${error.message}` };
   }
 
-  revalidatePath("/");
+  revalidatePath("/budget");
   return { ok: true, category: data };
 }
 
@@ -114,7 +114,7 @@ export async function updateCategory(
     return { ok: false, message: taken ? `"${clean}" already exists.` : `Couldn't save: ${error.message}` };
   }
 
-  revalidatePath("/");
+  revalidatePath("/budget");
   return { ok: true, category: data };
 }
 
@@ -133,7 +133,7 @@ export async function deleteCategory(id: number): Promise<{ ok: boolean; message
     };
   }
 
-  revalidatePath("/");
+  revalidatePath("/budget");
   return { ok: true };
 }
 
@@ -141,5 +141,5 @@ export async function deleteEntry(id: string): Promise<void> {
   if (!isUuid(id)) return;
   const { error } = await db().from("entries").delete().eq("id", id);
   if (error) throw new Error(`Couldn't delete: ${error.message}`);
-  revalidatePath("/");
+  revalidatePath("/budget");
 }

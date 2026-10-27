@@ -1,10 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { addEntry, type FormState } from "@/app/actions";
-import type { Category } from "@/lib/data";
+import { addEntry, type FormState } from "@/app/budget/actions";
+import type { Category } from "@/lib/budget";
 import CategoryPicker from "./CategoryPicker";
-import DateWheel from "./DateWheel";
+import DateWheel from "@/components/ui/DateWheel";
 
 const initial: FormState = { ok: false, message: null };
 

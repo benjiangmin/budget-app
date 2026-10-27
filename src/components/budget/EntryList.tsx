@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { deleteEntry, updateEntry, type FormState } from "@/app/actions";
-import type { Category, Entry } from "@/lib/data";
+import { deleteEntry, updateEntry, type FormState } from "@/app/budget/actions";
+import type { Category, Entry } from "@/lib/budget";
 import { formatMoney } from "@/lib/month";
 import CategoryPicker from "./CategoryPicker";
-import { useConfirm } from "./ConfirmDialog";
-import DateWheel from "./DateWheel";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
+import DateWheel from "@/components/ui/DateWheel";
 
 // "2026-10-22" → { day: "22", weekday: "Thu" }
 function dayParts(date: string) {
