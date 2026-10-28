@@ -5,8 +5,8 @@ import "./globals.css";
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 
 export const metadata: Metadata = {
-  title: "Budget",
-  description: "Track spending by category, month by month.",
+  title: "benbadobee",
+  description: "my life log",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

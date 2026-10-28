@@ -62,13 +62,32 @@ export default function DreamList({ days, year, focusId }: { days: DreamDay[]; y
       aria-label={`Dreams in ${year}`}
       className="relative flex h-[75dvh] min-h-[24rem] flex-col overflow-hidden rounded-card border-[1.5px] border-ink lg:h-auto lg:min-h-[32rem]"
     >
+      {/* Mascots: pinned to the box (they don't move when the list scrolls), behind everything,
+          and trimmed by the border. Munna starts below the month title (top-[4.5rem]) so its head
+          is never hidden. Tweak per image: w-.. = size, top/left/bottom/right = position (negative
+          pushes it past the edge), opacity-.. = fade, rotate-.. = tilt. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/munna.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-8 top-[4.5rem] w-32 select-none opacity-60 -rotate-6 sm:w-36"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/musharna.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-6 -right-10 w-44 select-none opacity-60 rotate-6 sm:w-52"
+      />
+
       {/* On wide screens the scroller is pinned to the box's edges (absolute inset-0), so a long list
           scrolls inside the box instead of making the box taller. */}
       <div
         ref={scrollerRef}
         data-scroller
         onScroll={onScroll}
-        className="min-h-0 flex-1 overflow-y-auto pb-4 lg:absolute lg:inset-0"
+        className="relative z-[1] min-h-0 flex-1 overflow-y-auto pb-4 lg:absolute lg:inset-0"
       >
         {months.length === 0 ? (
           <p className="m-4 rounded-card border border-dashed border-line px-5 py-6 text-muted">
@@ -78,7 +97,13 @@ export default function DreamList({ days, year, focusId }: { days: DreamDay[]; y
           months.map((m) => (
             <section key={m.key} data-month={m.key} aria-labelledby={`month-${m.key}`}>
               {/* Month title: sticks to the top while you're inside this month. */}
-              <div className="sticky top-0 z-10 flex items-baseline justify-between gap-3 bg-paper px-5 pb-2.5 pt-4 sm:px-6">
+              {/* Only the pinned title gets a solid background (so entries slide under it); the others are
+                  see-through so they don't cover the mascots as they scroll by. */}
+              <div
+                className={`sticky top-0 z-10 flex items-baseline justify-between gap-3 px-5 pb-2.5 pt-4 sm:px-6 ${
+                  stuck === m.key ? "bg-paper" : ""
+                }`}
+              >
                 <h2 id={`month-${m.key}`} className="font-display text-xl font-semibold">
                   {monthName(m.key)}
                 </h2>
@@ -122,7 +147,8 @@ function DayEntry({ day, focusId }: { day: DreamDay; focusId?: string }) {
   const count = `${day.dreams.length} ${day.dreams.length === 1 ? "dream" : "dreams"}`;
 
   return (
-    <li className="rounded-card bg-surface">
+    // bg-surface/80 = slightly see-through, so the mascots show faintly behind. Use bg-surface for solid.
+    <li className="rounded-card bg-surface/80">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

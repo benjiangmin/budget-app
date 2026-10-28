@@ -75,7 +75,7 @@ export default function DreamForm({ defaultDate }: { defaultDate?: string }) {
               initial=""
               onChange={(body) => update(d.key, (x) => ({ ...x, body }))}
               onFiles={(files) => addFiles(d.key, files)}
-              placeholder={i === 0 ? "What happened? (You can paste pictures in here too.)" : "Another dream…"}
+              placeholder={i === 0 ? "I have a dream....that one day blah blah blah" : "Another dream…"}
               label={`Dream ${i + 1}`}
             />
             <Pictures
