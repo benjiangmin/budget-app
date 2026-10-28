@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { getCategories } from "@/lib/home";
 import CategoryGrid from "@/components/home/CategoryGrid";
+import { lock } from "./login/actions";
 
 // Home: your categories. The layout lives in Supabase (supabase/home.sql), and you change it
 // from the page itself with the Edit button.
@@ -11,6 +12,12 @@ export default function Home() {
       <Suspense fallback={<Skeleton />}>
         <Categories />
       </Suspense>
+      {/* Signs this browser out (you'll need the password again). */}
+      <form action={lock} className="mt-12 text-center">
+        <button type="submit" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
+          Lock site
+        </button>
+      </form>
     </main>
   );
 }
