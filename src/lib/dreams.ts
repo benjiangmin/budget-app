@@ -45,3 +45,27 @@ export async function getDreamsForYear(year: number): Promise<DreamDay[]> {
   }
   return days;
 }
+
+export type DreamHit = { id: string; dream_date: string; snippet: string };
+
+// Case-insensitive "contains" search across every dream, newest first.
+// Returns a short piece of text around the match for the results list.
+export async function searchDreams(query: string, limit = 25): Promise<DreamHit[]> {
+  // Escape LIKE wildcards so typing % or _ searches for them literally.
+  const safe = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+  const { data, error } = await db()
+    .from("dreams")
+    .select("id, dream_date, body")
+    .ilike("search_text", `%${safe}%`)
+    .order("dream_date", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`Search failed: ${error.message}`);
+
+  return data.map((d) => {
+    const text = htmlToText(toDreamHtml(d.body));
+    const at = Math.max(0, text.toLowerCase().indexOf(query.toLowerCase()));
+    const start = Math.max(0, at - 30);
+    const snippet = (start > 0 ? "…" : "") + text.slice(start, start + 120);
+    return { id: d.id, dream_date: d.dream_date, snippet };
+  });
+}

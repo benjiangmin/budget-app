@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteDream } from "@/app/dreams/actions";
 import type { Dream, DreamDay } from "@/lib/dreams";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
@@ -31,7 +31,7 @@ function blurb(day: DreamDay) {
 
 // The bordered box on the right: the year's dreams, grouped by month, scrolling inside itself.
 // Each month's title sticks to the top of the box until the next month pushes it away.
-export default function DreamList({ days, year }: { days: DreamDay[]; year: number }) {
+export default function DreamList({ days, year, focusId }: { days: DreamDay[]; year: number; focusId?: string }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState<string | null>(null); // which month's title is pinned (shows the fade)
 
@@ -66,6 +66,7 @@ export default function DreamList({ days, year }: { days: DreamDay[]; year: numb
           scrolls inside the box instead of making the box taller. */}
       <div
         ref={scrollerRef}
+        data-scroller
         onScroll={onScroll}
         className="min-h-0 flex-1 overflow-y-auto pb-4 lg:absolute lg:inset-0"
       >
@@ -95,7 +96,7 @@ export default function DreamList({ days, year }: { days: DreamDay[]; year: numb
               {/* Each night is its own card. Gap between cards: space-y-2.5. */}
               <ul className="space-y-2.5 px-3 pt-1 sm:px-4">
                 {m.days.map((day) => (
-                  <DayEntry key={day.date} day={day} />
+                  <DayEntry key={day.date} day={day} focusId={focusId} />
                 ))}
               </ul>
             </section>
@@ -107,8 +108,15 @@ export default function DreamList({ days, year }: { days: DreamDay[]; year: numb
 }
 
 // One night, as a card. Closed: date + first few words. Click to open and read everything.
-function DayEntry({ day }: { day: DreamDay }) {
-  const [open, setOpen] = useState(false);
+function DayEntry({ day, focusId }: { day: DreamDay; focusId?: string }) {
+  const hasFocus = Boolean(focusId && day.dreams.some((d) => d.id === focusId));
+  const [open, setOpen] = useState(hasFocus);
+  // Picked from search while already on this page: open this night.
+  const [openedFor, setOpenedFor] = useState(hasFocus ? focusId : undefined);
+  if (hasFocus && openedFor !== focusId) {
+    setOpenedFor(focusId);
+    setOpen(true);
+  }
   const { day: d, weekday } = dateParts(day.date);
   const pictureCount = day.dreams.reduce((n, x) => n + x.images.length, 0);
   const count = `${day.dreams.length} ${day.dreams.length === 1 ? "dream" : "dreams"}`;
@@ -120,8 +128,8 @@ function DayEntry({ day }: { day: DreamDay }) {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         // When open: square bottom corners + a darker line under the bar, separating it from the dreams.
-        className={`group flex w-full items-start gap-4 rounded-card px-3 py-3.5 text-left transition-colors hover:bg-line/50 ${
-          open ? "rounded-b-none border-b-[3px] border-ink/45" : ""
+        className={`group flex w-full items-start gap-4 rounded-card px-3 py-3.5 text-left transition-[background-color] hover:bg-line/50 ${
+          open ? "rounded-b-none border-b-[3px] border-ink/25" : ""
         }`}
       >
         {/* Date: "Thu" over a big "15". */}
@@ -155,7 +163,13 @@ function DayEntry({ day }: { day: DreamDay }) {
       {open && (
         <div className="divide-y divide-line px-3 pb-3 pl-16 pt-1">
           {day.dreams.map((dream, i) => (
-            <DreamItem key={dream.id} dream={dream} date={day.date} label={day.dreams.length > 1 ? `Dream ${i + 1}` : null} />
+            <DreamItem
+              key={dream.id}
+              dream={dream}
+              date={day.date}
+              label={day.dreams.length > 1 ? `Dream ${i + 1}` : null}
+              focused={dream.id === focusId}
+            />
           ))}
         </div>
       )}
@@ -164,10 +178,30 @@ function DayEntry({ day }: { day: DreamDay }) {
 }
 
 // One dream inside an open night, with its own edit (pencil) and delete (×) on the right.
-function DreamItem({ dream, date, label }: { dream: Dream; date: string; label: string | null }) {
+function DreamItem({
+  dream,
+  date,
+  label,
+  focused,
+}: {
+  dream: Dream;
+  date: string;
+  label: string | null;
+  focused: boolean;
+}) {
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
   const confirm = useConfirm();
+  const ref = useRef<HTMLElement>(null);
+
+  // Arrived here from a search result: scroll the box (not the page) so this dream is centered.
+  useEffect(() => {
+    const el = ref.current;
+    const scroller = el?.closest<HTMLElement>("[data-scroller]");
+    if (!focused || !el || !scroller) return;
+    const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+    scroller.scrollTo({ top: top - scroller.clientHeight / 2 + el.offsetHeight / 2, behavior: "smooth" });
+  }, [focused]);
 
   async function remove() {
     const ok = await confirm({
@@ -187,7 +221,13 @@ function DreamItem({ dream, date, label }: { dream: Dream; date: string; label: 
   }
 
   return (
-    <article className={`group/dream flex gap-3 py-3 transition-opacity ${pending ? "opacity-40" : ""}`}>
+    <article
+      ref={ref}
+      // -mx-2 px-2: a little room on the sides so the search highlight (flash) isn't tight to the text.
+      className={`group/dream -mx-2 flex gap-3 rounded-control px-2 py-3 transition-opacity ${pending ? "opacity-40" : ""} ${
+        focused ? "flash" : ""
+      }`}
+    >
       <div className="min-w-0 flex-1">
         {label && <p className="mb-1 font-display text-sm font-semibold text-accent">{label}</p>}
         {/* Saved text is cleaned to just <p>, <br>, bold, italic and underline before it gets here. */}

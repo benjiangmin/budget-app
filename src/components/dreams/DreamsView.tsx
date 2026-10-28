@@ -4,6 +4,7 @@ import { getDreamsForYear } from "@/lib/dreams";
 import YearPicker from "@/components/ui/YearPicker";
 import DreamForm from "./DreamForm";
 import DreamList from "./DreamList";
+import DreamSearch from "./DreamSearch";
 
 export default async function DreamsView({
   searchParams,
@@ -16,6 +17,8 @@ export default async function DreamsView({
   const thisYear = new Date().getFullYear();
   const year = raw && /^\d{4}$/.test(raw) ? Number(raw) : thisYear;
   const isThisYear = year === thisYear;
+  // Set when you pick a search result: that dream gets opened, scrolled to and highlighted.
+  const focusId = typeof params.focus === "string" ? params.focus : undefined;
 
   const days = await getDreamsForYear(year);
 
@@ -39,6 +42,9 @@ export default async function DreamsView({
         </div>
         <YearArrow year={year + 1} dir="next" />
       </header>
+      <div className="relative z-30 shrink-0">
+        <DreamSearch />
+      </div>
 
       {/* Two columns on wide screens: writing on the left, the list on the right.
           Column widths: the 5fr / 7fr split. On phones they stack.
@@ -52,7 +58,7 @@ export default async function DreamsView({
             <DreamForm defaultDate={isThisYear ? undefined : `${year}-01-01`} />
           </section>
         </div>
-        <DreamList days={days} year={year} />
+        <DreamList days={days} year={year} focusId={focusId} />
       </div>
     </>
   );
