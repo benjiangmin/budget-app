@@ -3,6 +3,7 @@
 export const PAGES = [
   { href: "/budget", label: "Budget" },
   { href: "/gratitude", label: "Gratitude" },
+  { href: "/dreams", label: "Dreams" },
 ] as const;
 
 export const isKnownPage = (href: string) => PAGES.some((p) => p.href === href);
