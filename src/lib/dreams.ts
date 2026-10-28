@@ -1,10 +1,12 @@
 import "server-only";
 import { db } from "./supabase";
+import { htmlToText, toDreamHtml } from "./dream-html";
 
 export const DREAM_BUCKET = "dream-images";
 
 export type DreamImage = { path: string; url: string }; // url = temporary link for showing it
-export type Dream = { id: string; body: string; images: DreamImage[] };
+// body = safe HTML (bold/italic/underline), text = the same words without formatting
+export type Dream = { id: string; body: string; text: string; images: DreamImage[] };
 export type DreamDay = { date: string; dreams: Dream[] }; // date = "YYYY-MM-DD"
 
 // Every dream in a year, newest day first, grouped by day.
@@ -30,9 +32,11 @@ export async function getDreamsForYear(year: number): Promise<DreamDay[]> {
 
   const days: DreamDay[] = [];
   for (const d of data) {
+    const body = toDreamHtml(d.body);
     const dream: Dream = {
       id: d.id,
-      body: d.body,
+      body,
+      text: htmlToText(body),
       images: (d.images as string[]).filter((p) => urls.has(p)).map((p) => ({ path: p, url: urls.get(p)! })),
     };
     const last = days.at(-1);

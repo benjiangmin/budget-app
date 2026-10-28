@@ -103,20 +103,38 @@ body {
   .rise, .flash { animation: none; }
 }
 
-/* Scrollbars everywhere: slim and coffee-colored. */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
+/* Scrollbars everywhere: slim and coffee-colored.
+   Inside @layer base so a class on one element (like the date wheels' hidden scrollbars) still wins. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  /* Same look for Safari, which ignores the two lines above. */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
-/* Same look for Safari, which ignores the two lines above. */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+
+/* Dream text (the editor and the saved dreams): paragraph spacing + the grey placeholder. */
+.dream-text p {
+  margin: 0 0 0.6em;
 }
-::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 999px;
+.dream-text p:last-child {
+  margin-bottom: 0;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+.dream-text p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { deleteDreamDay } from "@/app/dreams/actions";
-import type { DreamDay } from "@/lib/dreams";
+import { deleteDream } from "@/app/dreams/actions";
+import type { Dream, DreamDay } from "@/lib/dreams";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
-import DreamForm from "./DreamForm";
+import DreamEdit from "./DreamEdit";
 
 const BLURB_WORDS = 15; // how many words show on a closed entry
 
@@ -14,7 +14,6 @@ function dateParts(date: string) {
   return {
     day: String(d),
     weekday: dt.toLocaleDateString("en-US", { weekday: "short" }),
-    long: dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
   };
 }
 
@@ -25,7 +24,7 @@ function monthName(monthKey: string) {
 
 // The first few words of the day's dreams.
 function blurb(day: DreamDay) {
-  const words = day.dreams.map((d) => d.body).join(" ").split(/\s+/).filter(Boolean);
+  const words = day.dreams.map((d) => d.text).join(" ").split(/\s+/).filter(Boolean);
   if (words.length === 0) return "Just pictures";
   return words.slice(0, BLURB_WORDS).join(" ") + (words.length > BLURB_WORDS ? "…" : "");
 }
@@ -63,7 +62,13 @@ export default function DreamList({ days, year }: { days: DreamDay[]; year: numb
       aria-label={`Dreams in ${year}`}
       className="relative flex h-[75dvh] min-h-[24rem] flex-col overflow-hidden rounded-card border-[1.5px] border-ink lg:h-auto lg:min-h-[32rem]"
     >
-      <div ref={scrollerRef} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto pb-4">
+      {/* On wide screens the scroller is pinned to the box's edges (absolute inset-0), so a long list
+          scrolls inside the box instead of making the box taller. */}
+      <div
+        ref={scrollerRef}
+        onScroll={onScroll}
+        className="min-h-0 flex-1 overflow-y-auto pb-4 lg:absolute lg:inset-0"
+      >
         {months.length === 0 ? (
           <p className="m-4 rounded-card border border-dashed border-line px-5 py-6 text-muted">
             No dreams logged in {year} yet.
@@ -87,7 +92,8 @@ export default function DreamList({ days, year }: { days: DreamDay[]; year: numb
                   }`}
                 />
               </div>
-              <ul className="divide-y divide-line px-3 sm:px-4">
+              {/* Each night is its own card. Gap between cards: space-y-2.5. */}
+              <ul className="space-y-2.5 px-3 pt-1 sm:px-4">
                 {m.days.map((day) => (
                   <DayEntry key={day.date} day={day} />
                 ))}
@@ -100,39 +106,23 @@ export default function DreamList({ days, year }: { days: DreamDay[]; year: numb
   );
 }
 
-// One night. Closed: date + first few words. Click to open and read everything.
+// One night, as a card. Closed: date + first few words. Click to open and read everything.
 function DayEntry({ day }: { day: DreamDay }) {
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const confirm = useConfirm();
-  const { day: d, weekday, long } = dateParts(day.date);
+  const { day: d, weekday } = dateParts(day.date);
   const pictureCount = day.dreams.reduce((n, x) => n + x.images.length, 0);
-
-  async function remove() {
-    const ok = await confirm({
-      title: "Delete this night?",
-      body: `All dreams from ${long}${pictureCount ? " and their pictures" : ""} will be removed for good.`,
-      confirmLabel: "Delete",
-    });
-    if (ok) startTransition(() => deleteDreamDay(day.date));
-  }
-
-  if (editing) {
-    return (
-      <li className="my-2 rounded-card bg-surface p-4 sm:p-5">
-        <DreamForm day={day} onDone={() => setEditing(false)} />
-      </li>
-    );
-  }
+  const count = `${day.dreams.length} ${day.dreams.length === 1 ? "dream" : "dreams"}`;
 
   return (
-    <li className={`transition-opacity ${pending ? "opacity-40" : ""}`}>
+    <li className="rounded-card bg-surface">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="group flex w-full items-start gap-4 rounded-control px-2 py-3.5 text-left transition-colors hover:bg-surface/70"
+        // When open: square bottom corners + a darker line under the bar, separating it from the dreams.
+        className={`group flex w-full items-start gap-4 rounded-card px-3 py-3.5 text-left transition-colors hover:bg-line/50 ${
+          open ? "rounded-b-none border-b-[3px] border-ink/45" : ""
+        }`}
       >
         {/* Date: "Thu" over a big "15". */}
         <div className="w-10 shrink-0 text-center">
@@ -141,12 +131,10 @@ function DayEntry({ day }: { day: DreamDay }) {
         </div>
 
         <div className="min-w-0 flex-1 pt-0.5">
-          <p className={open ? "font-semibold text-ink" : "line-clamp-2 text-ink"}>
-            {open ? `${day.dreams.length} ${day.dreams.length === 1 ? "dream" : "dreams"}` : blurb(day)}
-          </p>
+          <p className={open ? "font-semibold text-ink" : "line-clamp-2 text-ink"}>{open ? count : blurb(day)}</p>
           {!open && (day.dreams.length > 1 || pictureCount > 0) && (
             <p className="mt-1 text-xs text-muted">
-              {day.dreams.length} {day.dreams.length === 1 ? "dream" : "dreams"}
+              {count}
               {pictureCount > 0 && ` · ${pictureCount} ${pictureCount === 1 ? "picture" : "pictures"}`}
             </p>
           )}
@@ -165,53 +153,94 @@ function DayEntry({ day }: { day: DreamDay }) {
       </button>
 
       {open && (
-        <div className="pb-4 pl-16 pr-2">
-          <div className="space-y-5">
-            {day.dreams.map((dream, i) => (
-              <article key={dream.id}>
-                {day.dreams.length > 1 && (
-                  <p className="mb-1 font-display text-sm font-semibold text-accent">Dream {i + 1}</p>
-                )}
-                {dream.body && <p className="whitespace-pre-wrap break-words leading-relaxed text-ink">{dream.body}</p>}
-                {dream.images.length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {dream.images.map((img) => (
-                      // Opens the full picture in a new tab.
-                      <a key={img.path} href={img.url} target="_blank" rel="noreferrer" className="block">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- user picture */}
-                        <img
-                          src={img.url}
-                          alt=""
-                          className="aspect-square w-full rounded-control border border-line object-cover transition-opacity hover:opacity-90"
-                        />
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-4 flex gap-1 text-sm">
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => setEditing(true)}
-              className="rounded-control px-2.5 py-1 text-muted transition-colors hover:bg-surface hover:text-ink"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={remove}
-              className="rounded-control px-2.5 py-1 text-muted transition-colors hover:bg-surface hover:text-danger"
-            >
-              Delete
-            </button>
-          </div>
+        <div className="divide-y divide-line px-3 pb-3 pl-16 pt-1">
+          {day.dreams.map((dream, i) => (
+            <DreamItem key={dream.id} dream={dream} date={day.date} label={day.dreams.length > 1 ? `Dream ${i + 1}` : null} />
+          ))}
         </div>
       )}
     </li>
+  );
+}
+
+// One dream inside an open night, with its own edit (pencil) and delete (×) on the right.
+function DreamItem({ dream, date, label }: { dream: Dream; date: string; label: string | null }) {
+  const [editing, setEditing] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const confirm = useConfirm();
+
+  async function remove() {
+    const ok = await confirm({
+      title: "Delete this dream?",
+      body: `Just this one${dream.images.length ? ", and its pictures" : ""}. Other dreams from that night stay.`,
+      confirmLabel: "Delete",
+    });
+    if (ok) startTransition(() => deleteDream(dream.id));
+  }
+
+  if (editing) {
+    return (
+      <div className="py-3">
+        <DreamEdit dream={dream} date={date} onDone={() => setEditing(false)} />
+      </div>
+    );
+  }
+
+  return (
+    <article className={`group/dream flex gap-3 py-3 transition-opacity ${pending ? "opacity-40" : ""}`}>
+      <div className="min-w-0 flex-1">
+        {label && <p className="mb-1 font-display text-sm font-semibold text-accent">{label}</p>}
+        {/* Saved text is cleaned to just <p>, <br>, bold, italic and underline before it gets here. */}
+        {dream.text && (
+          <div className="dream-text break-words leading-relaxed text-ink" dangerouslySetInnerHTML={{ __html: dream.body }} />
+        )}
+        {dream.images.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {dream.images.map((img) => (
+              // Opens the full picture in a new tab.
+              <a key={img.path} href={img.url} target="_blank" rel="noreferrer" className="block">
+                {/* eslint-disable-next-line @next/next/no-img-element -- user picture */}
+                <img
+                  src={img.url}
+                  alt=""
+                  className="aspect-square w-full rounded-control border border-line object-cover transition-opacity hover:opacity-90"
+                />
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="-mr-1 flex shrink-0 flex-col items-start sm:flex-row">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setEditing(true)}
+          aria-label="Edit this dream"
+          className="grid size-8 place-items-center rounded-control text-muted opacity-50 transition hover:bg-paper group-hover/dream:text-black group-hover/dream:opacity-100"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={remove}
+          aria-label="Delete this dream"
+          className="grid size-8 place-items-center rounded-control text-muted opacity-50 transition hover:bg-paper hover:text-danger! group-hover/dream:text-black group-hover/dream:opacity-100"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+    </article>
   );
 }

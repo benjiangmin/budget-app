@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/supabase";
 import { DREAM_BUCKET } from "@/lib/dreams";
+import { cleanDreamHtml, htmlToText } from "@/lib/dream-html";
 
 // NOTE: no login yet. Add Supabase Auth before deploying anywhere public.
 
@@ -11,112 +12,111 @@ export type SaveResult = { ok: boolean; message: string | null };
 const isDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 const isUuid = (s: string) => /^[0-9a-f-]{36}$/i.test(s);
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const clampCount = (n: unknown) => Math.min(Math.max(Number(n) || 0, 0), 20);
 
-// What the form sends for each dream (the pictures themselves come as separate files).
-type DreamMeta = { id: string | null; body: string; keep: string[]; newCount: number };
-
-function readMeta(raw: string): DreamMeta[] | null {
-  try {
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list) || list.length > 20) return null;
-    return list.map((d) => ({
-      id: typeof d.id === "string" && isUuid(d.id) ? d.id : null,
-      body: String(d.body ?? "").slice(0, 20000),
-      keep: Array.isArray(d.keep) ? d.keep.map(String) : [],
-      newCount: Math.min(Math.max(Number(d.newCount) || 0, 0), 20),
-    }));
-  } catch {
-    return null;
+// Uploads the pictures sent as `${prefix}0`, `${prefix}1`, … and returns their file names.
+async function uploadPictures(formData: FormData, prefix: string, count: number): Promise<string[] | string> {
+  const paths: string[] = [];
+  for (let k = 0; k < count; k++) {
+    const file = formData.get(`${prefix}${k}`);
+    if (!(file instanceof File) || file.size === 0) continue;
+    if (!file.type.startsWith("image/")) return "Only pictures can be attached.";
+    if (file.size > MAX_IMAGE_BYTES) return "One picture is too big (10MB max).";
+    const ext = (file.type.split("/")[1] ?? "jpg").replace("jpeg", "jpg").replace(/[^a-z0-9]/g, "");
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const up = await db().storage.from(DREAM_BUCKET).upload(path, file, { contentType: file.type });
+    if (up.error) return `Couldn't upload a picture: ${up.error.message}`;
+    paths.push(path);
   }
+  return paths;
 }
 
-// Saves a day's dreams. Used for both a new entry and editing a day:
-//  - new entry (no original_date): the dreams are added to that date, after any already there
-//  - editing (original_date set): the form holds the whole day, so dreams left out are deleted
-export async function saveDreamDay(formData: FormData): Promise<SaveResult> {
+async function removePictures(paths: string[]) {
+  if (paths.length > 0) await db().storage.from(DREAM_BUCKET).remove(paths);
+}
+
+// How many dreams a date already has (new ones go after them).
+async function countOn(date: string) {
+  const { count } = await db().from("dreams").select("id", { count: "exact", head: true }).eq("dream_date", date);
+  return count ?? 0;
+}
+
+// New entry: one or more dreams for a date. Empty boxes are skipped.
+export async function addDreams(formData: FormData): Promise<SaveResult> {
   const date = String(formData.get("dream_date") ?? "");
-  const original = String(formData.get("original_date") ?? "");
-  const meta = readMeta(String(formData.get("dreams") ?? ""));
   if (!isDate(date)) return { ok: false, message: "Pick a date." };
-  if ((original && !isDate(original)) || !meta) return { ok: false, message: "Something's off with the form. Refresh and try again." };
 
-  const supa = db();
+  let list: { body: string; newCount: number }[];
+  try {
+    const raw = JSON.parse(String(formData.get("dreams") ?? ""));
+    if (!Array.isArray(raw) || raw.length > 20) throw new Error();
+    list = raw.map((d) => ({ body: String(d.body ?? ""), newCount: clampCount(d.newCount) }));
+  } catch {
+    return { ok: false, message: "Something's off with the form. Refresh and try again." };
+  }
 
-  // The dreams already saved for the day being edited.
-  let existing: { id: string; images: string[] }[] = [];
-  if (original) {
-    const res = await supa.from("dreams").select("id, images").eq("dream_date", original);
+  let position = await countOn(date);
+  let saved = 0;
+  for (const [i, d] of list.entries()) {
+    const pictures = await uploadPictures(formData, `file_${i}_`, d.newCount);
+    if (typeof pictures === "string") return { ok: false, message: pictures };
+    const body = cleanDreamHtml(d.body);
+    if (!htmlToText(body) && pictures.length === 0) continue; // empty box
+    const res = await db().from("dreams").insert({ dream_date: date, body, images: pictures, position: position++ });
     if (res.error) return { ok: false, message: `Couldn't save: ${res.error.message}` };
-    existing = res.data;
+    saved++;
   }
-  const byId = new Map(existing.map((e) => [e.id, e]));
-
-  // New entries go after the dreams already logged that day.
-  let position = 0;
-  if (!original) {
-    const { count } = await supa.from("dreams").select("id", { count: "exact", head: true }).eq("dream_date", date);
-    position = count ?? 0;
-  }
-  const startPosition = position;
-
-  const kept = new Set<string>(); // ids still in the day
-  const unusedPictures = new Set<string>();
-
-  for (const [i, d] of meta.entries()) {
-    const prev = d.id ? byId.get(d.id) : undefined;
-    if (d.id && !prev) return { ok: false, message: "One of these dreams was already deleted. Refresh and try again." };
-
-    // Pictures it already had and still has, then any new ones.
-    const keep = prev ? d.keep.filter((p) => prev.images.includes(p)) : [];
-    prev?.images.filter((p) => !keep.includes(p)).forEach((p) => unusedPictures.add(p));
-
-    const uploaded: string[] = [];
-    for (let k = 0; k < d.newCount; k++) {
-      const file = formData.get(`file_${i}_${k}`);
-      if (!(file instanceof File) || file.size === 0) continue;
-      if (!file.type.startsWith("image/")) return { ok: false, message: "Only pictures can be attached." };
-      if (file.size > MAX_IMAGE_BYTES) return { ok: false, message: "One picture is too big (10MB max)." };
-      const ext = (file.type.split("/")[1] ?? "jpg").replace("jpeg", "jpg").replace(/[^a-z0-9]/g, "");
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const up = await supa.storage.from(DREAM_BUCKET).upload(path, file, { contentType: file.type });
-      if (up.error) return { ok: false, message: `Couldn't upload a picture: ${up.error.message}` };
-      uploaded.push(path);
-    }
-
-    const body = d.body.trim();
-    const images = [...keep, ...uploaded];
-    if (!body && images.length === 0) continue; // empty box: skip it (or delete it, if it was saved before)
-
-    const row = { dream_date: date, body, images, position: position++ };
-    const res = prev ? await supa.from("dreams").update(row).eq("id", prev.id) : await supa.from("dreams").insert(row);
-    if (res.error) return { ok: false, message: `Couldn't save: ${res.error.message}` };
-    if (prev) kept.add(prev.id);
-  }
-
-  if (!original && position === startPosition) return { ok: false, message: "Write at least one dream." };
-
-  // Dreams removed while editing.
-  const removed = existing.filter((e) => !kept.has(e.id));
-  if (removed.length > 0) {
-    const res = await supa.from("dreams").delete().in("id", removed.map((e) => e.id));
-    if (res.error) return { ok: false, message: `Couldn't save: ${res.error.message}` };
-    removed.forEach((e) => e.images.forEach((p) => unusedPictures.add(p)));
-  }
-  if (unusedPictures.size > 0) await supa.storage.from(DREAM_BUCKET).remove([...unusedPictures]);
+  if (saved === 0) return { ok: false, message: "Write at least one dream." };
 
   revalidatePath("/dreams");
   return { ok: true, message: null };
 }
 
-// Deletes every dream on a date, and their pictures.
-export async function deleteDreamDay(date: string) {
-  if (!isDate(date)) throw new Error("Bad date.");
-  const supa = db();
-  const { data, error } = await supa.from("dreams").select("images").eq("dream_date", date);
+// Edit one dream: its date, words and pictures.
+export async function updateDream(formData: FormData): Promise<SaveResult> {
+  const id = String(formData.get("id") ?? "");
+  const date = String(formData.get("dream_date") ?? "");
+  if (!isUuid(id)) return { ok: false, message: "Something's off. Refresh and try again." };
+  if (!isDate(date)) return { ok: false, message: "Pick a date." };
+
+  const prev = await db().from("dreams").select("dream_date, images, position").eq("id", id).maybeSingle();
+  if (prev.error) return { ok: false, message: `Couldn't save: ${prev.error.message}` };
+  if (!prev.data) return { ok: false, message: "This dream was already deleted. Refresh the page." };
+  const oldPictures = prev.data.images as string[];
+
+  let keep: string[] = [];
+  try {
+    const raw = JSON.parse(String(formData.get("keep") ?? "[]"));
+    if (Array.isArray(raw)) keep = raw.map(String).filter((p) => oldPictures.includes(p));
+  } catch {}
+
+  const added = await uploadPictures(formData, "file_", clampCount(formData.get("newCount")));
+  if (typeof added === "string") return { ok: false, message: added };
+
+  const body = cleanDreamHtml(String(formData.get("body") ?? ""));
+  const images = [...keep, ...added];
+  if (!htmlToText(body) && images.length === 0) {
+    await removePictures(added);
+    return { ok: false, message: "A dream can't be empty. Use × to delete it instead." };
+  }
+
+  // Moved to another date: put it after that date's dreams.
+  const position = date === prev.data.dream_date ? prev.data.position : await countOn(date);
+  const res = await db().from("dreams").update({ dream_date: date, body, images, position }).eq("id", id);
+  if (res.error) return { ok: false, message: `Couldn't save: ${res.error.message}` };
+  await removePictures(oldPictures.filter((p) => !keep.includes(p)));
+
+  revalidatePath("/dreams");
+  return { ok: true, message: null };
+}
+
+// Delete one dream and its pictures.
+export async function deleteDream(id: string) {
+  if (!isUuid(id)) throw new Error("Bad id.");
+  const { data, error } = await db().from("dreams").select("images").eq("id", id).maybeSingle();
   if (error) throw new Error(`Couldn't delete: ${error.message}`);
-  const del = await supa.from("dreams").delete().eq("dream_date", date);
+  const del = await db().from("dreams").delete().eq("id", id);
   if (del.error) throw new Error(`Couldn't delete: ${del.error.message}`);
-  const pictures = data.flatMap((d) => d.images as string[]);
-  if (pictures.length > 0) await supa.storage.from(DREAM_BUCKET).remove(pictures);
+  await removePictures((data?.images as string[] | undefined) ?? []);
   revalidatePath("/dreams");
 }
