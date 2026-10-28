@@ -25,7 +25,7 @@ export default async function DreamsView({
   return (
     <>
       {/* Year bar: arrows jump a year, click the year to pick any. */}
-      <header className="flex shrink-0 items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
+      <header className="relative z-40 flex shrink-0 items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
         <YearArrow year={year - 1} dir="prev" />
         <div className="text-center">
           <h1 className="flex items-center gap-1">
