@@ -16,7 +16,7 @@ function shortDate(date: string) {
 // Built in two stacked parts that share the same side borders (like the budget's Expenses box):
 //  1. the box's top edge: a heading with the rounded top border, pinned under the search/add bar,
 //     showing whichever year you're scrolled to
-//  2. the list, with side + bottom borders
+//  2. the list, with side borders only, running off the bottom of the page (no bottom edge)
 // Border thickness: change every border-[1.5px] below.
 export default function ComplimentList({ items, focusId }: { items: Compliment[]; focusId?: string }) {
   const years = useMemo(() => {
@@ -70,7 +70,7 @@ export default function ComplimentList({ items, focusId }: { items: Compliment[]
   const count = years.find((y) => y.year === current)?.items.length ?? 0;
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 flex flex-1 flex-col">
       {/* The box's top edge. Pins just under the search/add bar (--sticky-top is that bar's height;
           on phones the bar isn't pinned, so this pins at the very top). The paper background hides
           entries passing under it. data-stick-under hides the bar's own fade once this is pinned. */}
@@ -92,11 +92,29 @@ export default function ComplimentList({ items, focusId }: { items: Compliment[]
         />
       </div>
 
+      {/* overflow-clip trims the mascots at the border. flex-1 = reaches the bottom of the page. */}
       <section
         ref={listRef}
         aria-label="Compliments"
-        className="rounded-b-card border-[1.5px] border-t-0 border-ink px-3 pb-3 sm:px-5"
+        className="relative flex-1 overflow-clip border-x-[1.5px] border-ink px-3 pb-24 sm:px-5"
       >
+        {/* Mascot layer: one screen tall and sticky, so the mascots stay put on screen while the list
+            scrolls past (and it takes no room: the negative bottom margin cancels its height).
+            It pins just under the pinned year bar (3.5rem tall), below the search/add bar on wider
+            screens. Behind the cards (z-0 vs z-[1]).
+            Tweak per image: w-.. = size, top/right/bottom/left = position (negative pushes it past
+            the border), opacity-.. = fade, rotate-.. = tilt. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none sticky top-14 z-0 -mb-[calc(100dvh-3.5rem)] h-[calc(100dvh-3.5rem)] sm:top-[calc(var(--sticky-top,0px)+3.5rem)] sm:-mb-[calc(100dvh-var(--sticky-top,0px)-3.5rem)] sm:h-[calc(100dvh-var(--sticky-top,0px)-3.5rem)]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+          <img src="/togetic.png" alt="" className="absolute -right-8 top-4 w-36 select-none opacity-60 rotate-6 sm:w-44" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+          <img src="/blissey.png" alt="" className="absolute -bottom-6 -left-10 w-44 select-none opacity-60 -rotate-3 sm:w-56" />
+        </div>
+
+        <div className="relative z-[1]">
         {years.map((y, i) => (
           <div key={y.year} data-year={y.year}>
             {/* The first year's name is already in the box's top edge. */}
@@ -114,6 +132,7 @@ export default function ComplimentList({ items, focusId }: { items: Compliment[]
             </ul>
           </div>
         ))}
+        </div>
       </section>
     </div>
   );
@@ -148,13 +167,18 @@ function Item({ item, focused }: { item: Compliment; focused: boolean }) {
   }
 
   return (
+    // bg-surface/80 = slightly see-through, so the mascots show faintly behind. Use bg-surface for solid.
+    // Same columns for every entry, so they line up down the list:
+    //   date | who + compliment | note | edit/delete
+    // Column widths: the grid-cols-[…] below (the two fr numbers split the space between
+    // compliment and note). On phones the note drops under the compliment instead.
     <li
       ref={ref}
-      className={`group flex gap-4 rounded-card bg-surface px-3 py-3.5 transition-opacity sm:px-4 ${pending ? "opacity-40" : ""} ${
-        focused ? "flash" : ""
-      }`}
+      className={`group grid grid-cols-[3rem_minmax(0,1fr)_auto] gap-x-4 rounded-card bg-surface/80 px-3 py-3.5 transition-opacity sm:grid-cols-[3rem_minmax(0,1.5fr)_minmax(0,1fr)_auto] sm:px-4 ${
+        pending ? "opacity-40" : ""
+      } ${focused ? "flash" : ""}`}
     >
-      <div className="w-12 shrink-0 pt-0.5 text-sm">
+      <div className="pt-0.5 text-sm">
         {item.date_known ? (
           <span className="num text-muted">{shortDate(item.said_on)}</span>
         ) : (
@@ -163,12 +187,21 @@ function Item({ item, focused }: { item: Compliment; focused: boolean }) {
           </span>
         )}
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <p className="font-display font-semibold text-ink">{item.person}</p>
         <p className="mt-0.5 break-words leading-relaxed text-ink">{item.compliment}</p>
-        {item.note && <p className="mt-1 break-words text-sm text-muted">{item.note}</p>}
+        {/* Phones: the note goes here, under the compliment. */}
+        {item.note && <p className="mt-1 break-words text-sm text-muted sm:hidden">{item.note}</p>}
       </div>
-      <div className="-mr-1 flex shrink-0 flex-col items-start sm:flex-row">
+      {/* Wider screens: the note gets its own column (empty when there's no note, so columns stay aligned). */}
+      <p
+        className={`hidden min-w-0 break-words pl-4 pt-0.5 text-sm leading-relaxed text-muted sm:block ${
+          item.note ? "border-l border-line" : ""
+        }`}
+      >
+        {item.note}
+      </p>
+      <div className="-mr-1 flex flex-col items-start sm:flex-row">
         <button
           type="button"
           disabled={pending}

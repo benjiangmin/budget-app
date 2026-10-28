@@ -10,7 +10,8 @@ import ComplimentSearch from "@/components/compliments/ComplimentSearch";
 // Compliments log: one page, everything on it. The page itself scrolls (no box scrolling).
 export default function ComplimentsPage(props: PageProps<"/compliments">) {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 pb-24 pt-8 sm:pt-10">
+    // At least one screen tall, so the list's box can run to the bottom of the page.
+    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col px-4 pt-8 sm:pt-10">
       <Link href="/" className="mb-4 inline-block text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
         ← Home
       </Link>
@@ -37,7 +38,8 @@ async function Compliments({ focus }: { focus?: string }) {
           search + the add box. z-30 keeps their popups above the list. */}
       <StickyTop className="relative z-30 -mx-4 bg-paper px-4 pb-3 pt-1 sm:sticky sm:top-0">
         <ComplimentSearch />
-        <div className="mt-3 rounded-card bg-surface p-3 sm:p-4">
+        {/* The add box: a deeper oat with a thin coffee outline + soft shadow, so it stands out. */}
+        <div className="mt-3 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
           <ComplimentForm />
         </div>
       </StickyTop>
