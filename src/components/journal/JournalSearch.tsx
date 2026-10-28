@@ -15,6 +15,7 @@ export default function JournalSearch() {
       endpoint="/api/journal/search"
       placeholder="Search your journal"
       label="Search journal"
+      groupOf={(h) => h.doc} // one heading per document, e.g. "Unsuspicious document #3 · 2023–24"
       hrefFor={(h) => `/journal/${h.doc_year}?m=${Number(h.entry_date.slice(5, 7))}&focus=${h.id}`}
       renderHit={(h, q) => (
         <>

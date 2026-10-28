@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { MIN_SEARCH_LENGTH } from "@/lib/search-config";
 
@@ -13,18 +13,21 @@ export default function SearchBox<T extends { id: string }>({
   endpoint,
   hrefFor,
   renderHit,
+  groupOf,
   placeholder = "Search entries",
   label = "Search entries",
 }: {
   endpoint: string;
   hrefFor: (hit: T) => string;
   renderHit: (hit: T, query: string) => ReactNode;
+  groupOf?: (hit: T) => string; // optional: results with the same label get a shared heading
   placeholder?: string;
   label?: string;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<T[]>([]);
+  const [total, setTotal] = useState(0); // how many match in all (results may show fewer)
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(0); // which result the arrow keys are on
@@ -43,6 +46,7 @@ export default function SearchBox<T extends { id: string }>({
         const res = await fetch(`${endpoint}?q=${encodeURIComponent(q)}`, { signal: controller.signal });
         const json = await res.json();
         setResults(json.results ?? []);
+        setTotal(json.total ?? json.results?.length ?? 0);
         setCursor(0);
         setStatus(res.ok ? "done" : "error");
       } catch (e) {
@@ -138,9 +142,25 @@ export default function SearchBox<T extends { id: string }>({
           ) : results.length === 0 ? (
             <p className="px-4 py-3 text-sm text-muted">Nothing matches &ldquo;{q}&rdquo;.</p>
           ) : (
-            <ul role="listbox" aria-label="Search results" className="max-h-80 overflow-y-auto p-1.5">
-              {results.map((hit, i) => (
-                <li key={hit.id} role="option" aria-selected={i === cursor}>
+            <ul role="listbox" aria-label="Search results" className="max-h-96 overflow-y-auto p-1.5 pt-0">
+              <MatchCount shown={results.length} total={total} />
+              {results.map((hit, i) => {
+                // Group heading when the group changes (e.g. a new document).
+                const group = groupOf?.(hit);
+                const heading = group && (i === 0 || groupOf!(results[i - 1]) !== group) ? group : null;
+                const inGroup = heading ? results.filter((r) => groupOf!(r) === group).length : 0;
+                return (
+                <Fragment key={hit.id}>
+                {heading && (
+                  <li
+                    role="presentation"
+                    className="sticky top-8 z-[1] flex items-baseline justify-between gap-3 bg-paper px-3 pb-1 pt-2.5 font-display text-sm font-semibold text-ink"
+                  >
+                    <span className="truncate">{heading}</span>
+                    <span className="shrink-0 text-xs font-normal text-muted">{inGroup}</span>
+                  </li>
+                )}
+                <li role="option" aria-selected={i === cursor}>
                   <button
                     type="button"
                     onMouseEnter={() => setCursor(i)}
@@ -152,7 +172,9 @@ export default function SearchBox<T extends { id: string }>({
                     {renderHit(hit, q)}
                   </button>
                 </li>
-              ))}
+                </Fragment>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -171,5 +193,16 @@ export function Highlight({ text, query }: { text: string; query: string }) {
       <mark className="rounded-[3px] bg-accent/12 font-semibold text-ink">{text.slice(i, i + query.length)}</mark>
       {text.slice(i + query.length)}
     </>
+  );
+}
+
+// "Showing 25 of 150 matches" (or just "3 matches" when everything fits). Stays at the top while scrolling.
+export function MatchCount({ shown, total }: { shown: number; total: number }) {
+  return (
+    <li role="presentation" className="sticky top-0 z-[2] flex h-8 items-center bg-paper px-3 text-xs text-muted">
+      {total > shown
+        ? `Showing ${shown} of ${total} matches. Keep typing to narrow it down.`
+        : `${total} ${total === 1 ? "match" : "matches"}`}
+    </li>
   );
 }

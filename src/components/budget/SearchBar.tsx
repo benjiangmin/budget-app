@@ -1,5 +1,7 @@
 "use client";
 
+import { MatchCount } from "@/components/ui/SearchBox";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SearchHit } from "@/lib/budget";
@@ -30,6 +32,7 @@ export default function SearchBar() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchHit[]>([]);
+  const [total, setTotal] = useState(0); // how many match in all (results may show fewer)
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(0); // which result the arrow keys are on
@@ -48,6 +51,7 @@ export default function SearchBar() {
         const res = await fetch(`/api/budget/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
         const json = await res.json();
         setResults(json.results ?? []);
+        setTotal(json.total ?? json.results?.length ?? 0);
         setCursor(0);
         setStatus(res.ok ? "done" : "error");
       } catch (e) {
@@ -143,7 +147,8 @@ export default function SearchBar() {
           ) : results.length === 0 ? (
             <p className="px-4 py-3 text-sm text-muted">No notes match &ldquo;{q}&rdquo;.</p>
           ) : (
-            <ul role="listbox" aria-label="Search results" className="max-h-80 overflow-y-auto p-1.5">
+            <ul role="listbox" aria-label="Search results" className="max-h-80 overflow-y-auto p-1.5 pt-0">
+              <MatchCount shown={results.length} total={total} />
               {results.map((hit, i) => (
                 <li key={hit.id} role="option" aria-selected={i === cursor}>
                   <button

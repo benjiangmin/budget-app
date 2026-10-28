@@ -39,18 +39,19 @@ export async function getEntriesForMonth(monthKey: string): Promise<Entry[]> {
 export type SearchHit = Entry & { category_name: string | null; category_color: string | null };
 
 // Case-insensitive "contains" search on notes, across every month.
-export async function searchEntries(query: string, limit = 25): Promise<SearchHit[]> {
+// Returns up to `limit` matches, plus how many match in total.
+export async function searchEntries(query: string, limit = 25): Promise<{ results: SearchHit[]; total: number }> {
   // Escape LIKE wildcards so typing % or _ searches for them literally.
   const safe = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
-  const { data, error } = await db()
+  const { data, error, count } = await db()
     .from("entries")
-    .select("id, amount, note, spent_on, category_id, categories(name, color)")
+    .select("id, amount, note, spent_on, category_id, categories(name, color)", { count: "exact" })
     .ilike("note", `%${safe}%`)
     .order("spent_on", { ascending: false })
     .limit(limit);
   if (error) throw new Error(`Search failed: ${error.message}`);
 
-  return data.map((e) => {
+  const results = data.map((e) => {
     // The joined category can come back as an object or a one-item array depending on typing.
     const cat = Array.isArray(e.categories) ? e.categories[0] : e.categories;
     return {
@@ -63,4 +64,5 @@ export async function searchEntries(query: string, limit = 25): Promise<SearchHi
       category_color: cat?.color ?? null,
     };
   });
+  return { results, total: count ?? results.length };
 }

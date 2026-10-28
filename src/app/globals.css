@@ -92,11 +92,11 @@ body {
 }
 
 @keyframes flash {
-  0%, 30% { background-color: #d4a373; } /* caramel: the highlight color */
+  0%, 45% { background-color: #d4a373; } /* caramel: the highlight color, held for the first 45% */
   100%    { background-color: var(--surface); } /* fades back to the box's normal color */
 }
 .flash {
-  animation: flash 2.4s ease-out both;
+  animation: flash 4.5s ease-out both; /* total length of the search highlight */
 }
 
 @media (prefers-reduced-motion: reduce) {

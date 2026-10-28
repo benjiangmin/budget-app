@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "./supabase";
 import { journalHref } from "./home-pages";
 import { cleanJournalHtml, journalText, picturePaths } from "./journal-html";
-import { docYearFor } from "./journal-years";
+import { docLabel, docYearFor } from "./journal-years";
 
 export const JOURNAL_BUCKET = "journal-images";
 
@@ -63,25 +63,33 @@ export async function getStartMonth(year: number): Promise<number> {
   return data?.start_month ?? 1;
 }
 
-// doc_year = which document (year page) the entry lives in, so search can link to it.
-export type JournalHit = { id: string; entry_date: string; doc_year: number; snippet: string };
+// doc_year = which document (year page) the entry lives in, so search can link to it;
+// doc = how to label it in the results ("Unsuspicious document #3 · 2023–24").
+export type JournalHit = { id: string; entry_date: string; doc_year: number; doc: string; snippet: string };
 
 // Case-insensitive "contains" search across every year, newest first.
-export async function searchJournal(query: string, limit = 25): Promise<JournalHit[]> {
+export async function searchJournal(query: string, limit = 50): Promise<{ results: JournalHit[]; total: number }> {
   const safe = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
-  const { data, error } = await db()
+  const { data, error, count } = await db()
     .from("journal_entries")
-    .select("id, entry_date, body")
+    .select("id, entry_date, body", { count: "exact" })
     .ilike("search_text", `%${safe}%`)
     .order("entry_date", { ascending: false })
     .limit(limit);
   if (error) throw new Error(`Search failed: ${error.message}`);
-  const docs = await db().from("journal_docs").select("year, start_month");
+  const [docs, cards] = await Promise.all([
+    db().from("journal_docs").select("year, start_month"),
+    db().from("home_items").select("name, href").like("href", "/journal/%"),
+  ]);
   const starts = new Map((docs.data ?? []).map((d) => [d.year as number, d.start_month as number]));
-  return data.map((d) => {
+  const names = new Map((cards.data ?? []).map((c) => [c.href as string, c.name as string]));
+  const results = data.map((d) => {
+    const year = docYearFor(d.entry_date, starts);
+    const doc = `${names.get(`/journal/${year}`) ?? "Unsuspicious document"} · ${docLabel(year, starts.get(year) ?? 1)}`;
     const text = journalText(cleanJournalHtml(d.body));
     const at = Math.max(0, text.toLowerCase().indexOf(query.toLowerCase()));
     const start = Math.max(0, at - 30);
-    return { id: d.id, entry_date: d.entry_date, doc_year: docYearFor(d.entry_date, starts), snippet: (start > 0 ? "…" : "") + text.slice(start, start + 120) };
+    return { id: d.id, entry_date: d.entry_date, doc_year: year, doc, snippet: (start > 0 ? "…" : "") + text.slice(start, start + 120) };
   });
+  return { results, total: count ?? results.length };
 }

@@ -26,15 +26,16 @@ export async function getGratitudeForMonth(monthKey: string): Promise<GratitudeE
 }
 
 // Case-insensitive "contains" search across all three items, every month.
-export async function searchGratitude(query: string, limit = 25): Promise<GratitudeEntry[]> {
+// Returns up to `limit` matches, plus how many match in total.
+export async function searchGratitude(query: string, limit = 25): Promise<{ results: GratitudeEntry[]; total: number }> {
   // Escape LIKE wildcards so typing % or _ searches for them literally.
   const safe = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
-  const { data, error } = await db()
+  const { data, error, count } = await db()
     .from("gratitude_entries")
-    .select(COLUMNS)
+    .select(COLUMNS, { count: "exact" })
     .ilike("search_text", `%${safe}%`)
     .order("entry_date", { ascending: false })
     .limit(limit);
   if (error) throw new Error(`Search failed: ${error.message}`);
-  return data;
+  return { results: data, total: count ?? data.length };
 }
