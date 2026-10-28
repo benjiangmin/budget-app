@@ -5,6 +5,7 @@ export const PAGES = [
   { href: "/gratitude", label: "Gratitude" },
   { href: "/dreams", label: "Dreams" },
   { href: "/compliments", label: "Compliments" },
+  { href: "/games", label: "Games" },
 ] as const;
 
 // Year templates: one page design shared by every year, e.g. /journal/2026.
