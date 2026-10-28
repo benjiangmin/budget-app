@@ -138,3 +138,40 @@ body {
   pointer-events: none;
   color: color-mix(in srgb, var(--muted) 70%, transparent);
 }
+/* Journal text (the writing box and the saved entries). Pictures sit right in the text. */
+.journal-text p {
+  margin: 0 0 0.7em;
+}
+.journal-text p:last-child {
+  margin-bottom: 0;
+}
+.journal-text img {
+  display: block;
+  max-width: 100%;
+  max-height: 22rem;
+  margin: 0.4em 0 0.8em;
+  border-radius: var(--radius-control);
+}
+.journal-text img.ProseMirror-selectednode {
+  outline: 2px solid var(--accent); /* the picture you clicked on (Backspace deletes it) */
+}
+.journal-text p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+
+/* Journal writing box: what's inside fades in once the box starts sliding open/closed. */
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Delay 480ms = right as the box finishes sliding, so its text never shifts while moving. */
+.panel-in {
+  animation: panel-in 280ms 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-in { animation: none; }
+}

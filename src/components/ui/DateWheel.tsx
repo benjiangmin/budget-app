@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PickerButton, usePopover, Wheel, WheelPanel } from "./Wheel";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -10,7 +10,16 @@ const daysIn = (y: number, m: number) => new Date(y, m, 0).getDate(); // m is 1â
 
 // Phone-style date picker: click the field to open it, then scroll or tap each wheel.
 // Submits as a hidden "YYYY-MM-DD" input so the form/server action don't change.
-export default function DateWheel({ name, defaultValue }: { name: string; defaultValue: string }) {
+// Optional onChange: called with the new date when the picker closes (not on every wheel tick).
+export default function DateWheel({
+  name,
+  defaultValue,
+  onChange,
+}: {
+  name: string;
+  defaultValue: string;
+  onChange?: (value: string) => void;
+}) {
   const [y0, m0, d0] = defaultValue.split("-").map(Number);
   const [year, setYear] = useState(y0);
   const [month, setMonth] = useState(m0);
@@ -24,6 +33,15 @@ export default function DateWheel({ name, defaultValue }: { name: string; defaul
   const days = Array.from({ length: maxDay }, (_, i) => i + 1);
 
   const value = `${year}-${pad(month)}-${pad(safeDay)}`;
+  // Tell the parent about the new date once the picker closes.
+  const emitted = useRef(value);
+  useEffect(() => {
+    if (!open && value !== emitted.current) {
+      emitted.current = value;
+      onChange?.(value);
+    }
+  }, [open, value, onChange]);
+
   const label = new Date(year, month - 1, safeDay).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
