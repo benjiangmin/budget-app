@@ -56,7 +56,7 @@ async function YearDocument({ year: raw, m, focus }: { year: string; m?: string 
       <div className="relative z-30 flex shrink-0 items-start gap-2">
         <YearSetting year={year} start={start} />
         <div className="min-w-0 flex-1">
-          <JournalSearch />
+          <JournalSearch year={year} />
         </div>
       </div>
 

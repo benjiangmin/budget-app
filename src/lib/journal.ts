@@ -2,7 +2,7 @@ import "server-only";
 import { db } from "./supabase";
 import { journalHref } from "./home-pages";
 import { cleanJournalHtml, journalText, picturePaths } from "./journal-html";
-import { docLabel, docYearFor } from "./journal-years";
+import { docLabel, docRange, docYearFor } from "./journal-years";
 
 export const JOURNAL_BUCKET = "journal-images";
 
@@ -68,14 +68,22 @@ export async function getStartMonth(year: number): Promise<number> {
 export type JournalHit = { id: string; entry_date: string; doc_year: number; doc: string; snippet: string };
 
 // Case-insensitive "contains" search across every year, newest first.
-export async function searchJournal(query: string, limit = 50): Promise<{ results: JournalHit[]; total: number }> {
+// docYear: only search inside that one document's dates.
+export async function searchJournal(
+  query: string,
+  docYear?: number,
+  limit = 50,
+): Promise<{ results: JournalHit[]; total: number }> {
   const safe = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
-  const { data, error, count } = await db()
+  let search = db()
     .from("journal_entries")
     .select("id, entry_date, body", { count: "exact" })
-    .ilike("search_text", `%${safe}%`)
-    .order("entry_date", { ascending: false })
-    .limit(limit);
+    .ilike("search_text", `%${safe}%`);
+  if (docYear !== undefined) {
+    const { first, last } = docRange(docYear, await getStartMonth(docYear));
+    search = search.gte("entry_date", first).lte("entry_date", last);
+  }
+  const { data, error, count } = await search.order("entry_date", { ascending: false }).limit(limit);
   if (error) throw new Error(`Search failed: ${error.message}`);
   const [docs, cards] = await Promise.all([
     db().from("journal_docs").select("year, start_month"),

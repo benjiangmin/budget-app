@@ -14,6 +14,8 @@ export default function SearchBox<T extends { id: string }>({
   hrefFor,
   renderHit,
   groupOf,
+  accessory,
+  beforeGo,
   placeholder = "Search entries",
   label = "Search entries",
 }: {
@@ -21,6 +23,8 @@ export default function SearchBox<T extends { id: string }>({
   hrefFor: (hit: T) => string;
   renderHit: (hit: T, query: string) => ReactNode;
   groupOf?: (hit: T) => string; // optional: results with the same label get a shared heading
+  accessory?: ReactNode; // optional: something inside the bar on the right (e.g. a toggle)
+  beforeGo?: () => Promise<void> | void; // optional: runs before jumping to a result (e.g. a fade)
   placeholder?: string;
   label?: string;
 }) {
@@ -43,7 +47,8 @@ export default function SearchBox<T extends { id: string }>({
     const timer = setTimeout(async () => {
       setStatus("loading");
       try {
-        const res = await fetch(`${endpoint}?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        const join = endpoint.includes("?") ? "&" : "?";
+        const res = await fetch(`${endpoint}${join}q=${encodeURIComponent(q)}`, { signal: controller.signal });
         const json = await res.json();
         setResults(json.results ?? []);
         setTotal(json.total ?? json.results?.length ?? 0);
@@ -69,9 +74,10 @@ export default function SearchBox<T extends { id: string }>({
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
-  function go(hit: T) {
+  async function go(hit: T) {
     setOpen(false);
     setQuery("");
+    await beforeGo?.();
     router.push(hrefFor(hit));
   }
 
@@ -114,9 +120,12 @@ export default function SearchBox<T extends { id: string }>({
         }}
         placeholder={placeholder}
         aria-label={label}
-        className="w-full rounded-control border border-line bg-surface py-2.5 pl-10 pr-10 text-ink placeholder:text-muted focus:border-ink focus:bg-paper focus:outline-none"
+        className={`w-full rounded-control border border-line bg-surface py-2.5 pl-10 text-ink placeholder:text-muted focus:border-ink focus:bg-paper focus:outline-none ${
+          accessory ? "pr-52" : "pr-10"
+        }`}
       />
 
+      <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
       {query && (
         <button
           type="button"
@@ -125,13 +134,15 @@ export default function SearchBox<T extends { id: string }>({
             setResults([]);
           }}
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-control text-muted hover:bg-line/60 hover:text-ink"
+          className="grid size-7 place-items-center rounded-control text-muted hover:bg-line/60 hover:text-ink"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
       )}
+      {accessory}
+      </div>
 
       {showPanel && (
         <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-card border border-line bg-paper shadow-xl shadow-ink/10">

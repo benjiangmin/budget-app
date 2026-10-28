@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { deleteJournalEntry, loadJournalDay, saveJournalDay } from "@/app/journal/actions";
 import type { JournalEntry } from "@/lib/journal";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
@@ -8,6 +8,7 @@ import DateWheel from "@/components/ui/DateWheel";
 import JournalEditor from "./JournalEditor";
 import { useToday } from "./useToday";
 import { inDoc } from "@/lib/journal-years";
+import { VEIL_EVENT } from "./veil";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const AUTOSAVE_MS = 1200; // today's entry saves this long after you stop typing
@@ -328,6 +329,26 @@ function EntryList({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  // Search jump: the search fades this box to oat ("pending"), the page jumps to the entry behind
+  // the veil ("landed"), then the veil lifts and the entry is already in place, flashing.
+  const [searchVeil, setSearchVeil] = useState<"none" | "pending" | "landed">(focusId ? "landed" : "none");
+  const [seenFocus, setSeenFocus] = useState(focusId);
+  if (focusId !== seenFocus) {
+    setSeenFocus(focusId);
+    if (focusId) setSearchVeil("landed");
+  }
+  useEffect(() => {
+    const onVeil = () => setSearchVeil("pending");
+    window.addEventListener(VEIL_EVENT, onVeil);
+    return () => window.removeEventListener(VEIL_EVENT, onVeil);
+  }, []);
+  useEffect(() => {
+    if (searchVeil === "none") return;
+    // Lift shortly after landing; if the jump never comes (same entry picked again), lift anyway.
+    const t = setTimeout(() => setSearchVeil("none"), searchVeil === "landed" ? 350 : 2500);
+    return () => clearTimeout(t);
+  }, [searchVeil]);
   // Newest is at the top, so "end of month" = top and "start of month" = bottom.
   const jump = (to: "top" | "bottom") => {
     const el = scrollerRef.current;
@@ -395,8 +416,8 @@ function EntryList({
       {/* The veil (wide screens only): covers the entries while the writing box slides. */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 z-20 hidden bg-surface lg:block ${
-          veiled ? "opacity-100 duration-150" : "opacity-0 duration-300"
+        className={`pointer-events-none absolute inset-0 z-20 bg-surface ${searchVeil !== "none" ? "block" : "hidden lg:block"} ${
+          veiled || searchVeil !== "none" ? "opacity-100 duration-150" : "opacity-0 duration-300"
         } transition-opacity ease-out motion-reduce:hidden`}
       />
     </section>
@@ -421,12 +442,13 @@ function Entry({
   const ref = useRef<HTMLLIElement>(null);
   const { day, weekday, long } = parts(entry.date);
 
-  // Arrived here from a search result: scroll the box (not the page) so this entry is in view.
-  useEffect(() => {
+  // Arrived here from a search result: jump the box (not the page) straight to this entry.
+  // No sliding: it happens behind the veil, before the screen is drawn (useLayoutEffect).
+  useLayoutEffect(() => {
     const el = ref.current;
     const scroller = el?.closest<HTMLElement>("[data-scroller]");
     if (!focused || !el || !scroller) return;
-    scroller.scrollTo({ top: el.offsetTop - 12, behavior: "smooth" });
+    scroller.scrollTo({ top: el.offsetTop - 12, behavior: "instant" });
   }, [focused]);
 
   async function remove() {
