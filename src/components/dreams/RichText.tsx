@@ -4,11 +4,14 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Placeholder } from "@tiptap/extensions";
+import { BulletListIcon, NumberedListIcon } from "@/components/ui/ListIcons";
 
 const images = (files: FileList | null | undefined) =>
   Array.from(files ?? []).filter((f) => f.type.startsWith("image/"));
 
-// A text box with bold, italic and underline (buttons, or Ctrl/Cmd + B / I / U).
+// A text box with bold, italic, underline (buttons, or Ctrl/Cmd + B / I / U) and lists.
+// Lists start by themselves like Google Docs: type "- " or "* " for bullets, "1. " for numbers.
+// Tab / Shift+Tab indents a list item in or out; Enter on an empty item ends the list.
 // Pasting or dropping a picture hands it to `onFiles` instead of putting it in the text.
 export default function RichText({
   initial,
@@ -34,18 +37,14 @@ export default function RichText({
   const editor = useEditor({
     immediatelyRender: false, // avoids a server/browser mismatch in Next
     extensions: [
-      // Only paragraphs, line breaks, bold, italic, underline and undo. Everything else is off.
+      // Only paragraphs, line breaks, bold, italic, underline, lists and undo. Everything else is off.
       StarterKit.configure({
         blockquote: false,
-        bulletList: false,
         code: false,
         codeBlock: false,
         heading: false,
         horizontalRule: false,
-        listItem: false,
-        listKeymap: false,
         link: false,
-        orderedList: false,
         strike: false,
       }),
       Placeholder.configure({ placeholder }),
@@ -79,7 +78,15 @@ export default function RichText({
   const active = useEditorState({
     editor,
     selector: ({ editor: e }) =>
-      e ? { bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline") } : null,
+      e
+        ? {
+            bold: e.isActive("bold"),
+            italic: e.isActive("italic"),
+            underline: e.isActive("underline"),
+            bullets: e.isActive("bulletList"),
+            numbers: e.isActive("orderedList"),
+          }
+        : null,
   });
 
   return (
@@ -93,6 +100,13 @@ export default function RichText({
         </FormatButton>
         <FormatButton label="Underline (Ctrl/Cmd+U)" on={active?.underline} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
           <span className="underline underline-offset-2">U</span>
+        </FormatButton>
+        <span className="mx-1 h-4 w-px self-center bg-line" aria-hidden="true" />
+        <FormatButton label="Bulleted list (or type - and a space)" on={active?.bullets} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+          <BulletListIcon />
+        </FormatButton>
+        <FormatButton label="Numbered list (or type 1. and a space)" on={active?.numbers} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+          <NumberedListIcon />
         </FormatButton>
       </div>
       {/* Before the editor loads, show an empty box of the same size so nothing jumps. */}

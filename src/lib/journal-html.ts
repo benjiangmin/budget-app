@@ -1,11 +1,11 @@
-// Journal entries are saved as a small bit of HTML: paragraphs, bold, italic, underline and
+// Journal entries are saved as a small bit of HTML: paragraphs, bold, italic, underline, lists and
 // pictures placed in the text. Everything else is stripped before saving and before showing,
 // so nothing saved can run code or load anything unexpected.
 //
 // Pictures are saved as <img data-path="abc.jpg"> (the file's name in the private folder).
 // The real, temporary link is added only when the page is shown.
 
-const TAGS = /^<\/?(p|strong|em|u)>$|^<br\s*\/?>$/i;
+const TAGS = /^<\/?(p|strong|em|u|ul|ol|li)>$|^<br\s*\/?>$/i;
 const PATH = /^[0-9a-f-]{36}\.(jpg|jpeg|png|gif|webp)$/i;
 
 export function cleanJournalHtml(html: string) {
@@ -27,7 +27,7 @@ export function picturePaths(html: string) {
 // The words only, for previews/search snippets.
 export function journalText(html: string) {
   return html
-    .replace(/<\/p>|<br>/g, " ")
+    .replace(/<\/p>|<\/li>|<br>/g, " ")
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&lt;/g, "<")

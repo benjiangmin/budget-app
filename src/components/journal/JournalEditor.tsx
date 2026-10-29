@@ -5,6 +5,7 @@ import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { Placeholder } from "@tiptap/extensions";
+import { BulletListIcon, NumberedListIcon } from "@/components/ui/ListIcons";
 import { uploadJournalPicture } from "@/app/journal/actions";
 import { shrinkImage } from "@/lib/shrink-image";
 
@@ -27,7 +28,7 @@ const EMOJIS = "😀 😂 🥲 😭 😊 😍 🥰 😎 🤔 😴 😤 😡 😳
 const imagesIn = (files: FileList | null | undefined) =>
   Array.from(files ?? []).filter((f) => f.type.startsWith("image/"));
 
-// The big writing box: bold / italic / underline, emoji, and pictures that sit right in the text.
+// The big writing box: bold / italic / underline, lists (type "- " or "1. " to start one), emoji, and pictures that sit right in the text.
 // Fills whatever height it's given and scrolls inside itself.
 export default function JournalEditor({
   initial,
@@ -53,15 +54,11 @@ export default function JournalEditor({
     extensions: [
       StarterKit.configure({
         blockquote: false,
-        bulletList: false,
         code: false,
         codeBlock: false,
         heading: false,
         horizontalRule: false,
-        listItem: false,
-        listKeymap: false,
         link: false,
-        orderedList: false,
         strike: false,
       }),
       Picture.configure({ allowBase64: false }),
@@ -120,7 +117,15 @@ export default function JournalEditor({
   const active = useEditorState({
     editor,
     selector: ({ editor: e }) =>
-      e ? { bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline") } : null,
+      e
+        ? {
+            bold: e.isActive("bold"),
+            italic: e.isActive("italic"),
+            underline: e.isActive("underline"),
+            bullets: e.isActive("bulletList"),
+            numbers: e.isActive("orderedList"),
+          }
+        : null,
   });
 
   return (
@@ -135,6 +140,13 @@ export default function JournalEditor({
         </ToolButton>
         <ToolButton label="Underline (Ctrl/Cmd+U)" on={active?.underline} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
           <span className="underline underline-offset-2">U</span>
+        </ToolButton>
+        <span className="mx-1 h-4 w-px self-center bg-line" aria-hidden="true" />
+        <ToolButton label="Bulleted list (or type - and a space)" on={active?.bullets} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+          <BulletListIcon />
+        </ToolButton>
+        <ToolButton label="Numbered list (or type 1. and a space)" on={active?.numbers} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+          <NumberedListIcon />
         </ToolButton>
         <span className="mx-1 h-4 w-px bg-line" aria-hidden="true" />
         <ToolButton label="Emoji" on={emojiOpen} onClick={() => setEmojiOpen((o) => !o)}>

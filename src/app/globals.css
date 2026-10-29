@@ -187,3 +187,47 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .panel-pop { animation: none; }
 }
+
+/* Lists in the dream / crash out / journal text (both while writing and when shown). */
+.dream-text ul,
+.journal-text ul {
+  list-style: disc;
+  padding-left: 1.4em;
+  margin: 0 0 0.6em;
+}
+.dream-text ol,
+.journal-text ol {
+  list-style: decimal;
+  padding-left: 1.6em;
+  margin: 0 0 0.6em;
+}
+.dream-text ul ul,
+.journal-text ul ul {
+  list-style: circle;
+  margin: 0.15em 0 0;
+}
+.dream-text ul ul ul,
+.journal-text ul ul ul {
+  list-style: square;
+}
+.dream-text ol ol,
+.journal-text ol ol {
+  list-style: lower-alpha;
+  margin: 0.15em 0 0;
+}
+.dream-text li,
+.journal-text li {
+  margin: 0.15em 0;
+}
+.dream-text li::marker,
+.journal-text li::marker {
+  color: var(--muted);
+}
+.dream-text li p,
+.journal-text li p {
+  margin: 0;
+}
+.dream-text > :last-child,
+.journal-text > :last-child {
+  margin-bottom: 0;
+}

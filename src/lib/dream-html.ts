@@ -1,8 +1,8 @@
-// Dreams are saved as a tiny bit of HTML so they can have bold, italic and underline.
-// Only these tags are ever kept: <p> <br> <strong> <em> <u>, with no attributes.
+// Dreams and crash outs are saved as a tiny bit of HTML so they can have bold, italic, underline
+// and lists. Only these tags are ever kept: <p> <br> <strong> <em> <u> <ul> <ol> <li>, with no attributes.
 // Everything else is stripped, so nothing saved can run code or load anything on the page.
 
-const ALLOWED = /^<\/?(p|strong|em|u)>$|^<br\s*\/?>$/i;
+const ALLOWED = /^<\/?(p|strong|em|u|ul|ol|li)>$|^<br\s*\/?>$/i;
 
 export function cleanDreamHtml(html: string) {
   return html
@@ -23,7 +23,7 @@ export function plainToHtml(text: string) {
 // The words only, for the short preview on a closed entry.
 export function htmlToText(html: string) {
   return html
-    .replace(/<\/p>|<br>/g, " ")
+    .replace(/<\/p>|<\/li>|<br>/g, " ")
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&lt;/g, "<")
