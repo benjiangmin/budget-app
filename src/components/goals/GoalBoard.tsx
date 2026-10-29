@@ -58,9 +58,12 @@ const config: BoardConfig<Goal> = {
   onMove: (g, to, today) => moveGoal(g.id, to, today),
   onDelete: (g) => deleteGoal(g.id),
   editor: (g, done) => <GoalForm goal={g} compact onDone={done} />,
-  // Mascots work like the games board, e.g.
-  // completed: { src: "/name.png", className: "-bottom-4 -right-6 w-28 -rotate-6 lg:w-36" },
-  mascots: {},
+  // Bagon in Yet to start's bottom-left, Salamence in Completed's bottom-left (each trimmed by its column).
+  // Tweak: w-.. = size, bottom/left = position (negative = past the edge), rotate-.. = tilt.
+  mascots: {
+    backlog: { src: "/bagon.png", className: "-bottom-3 -left-4 w-28 rotate-3 lg:w-36" },
+    completed: { src: "/salamence.png", className: "-bottom-4 -left-6 w-40 -rotate-3 lg:w-52" },
+  },
 };
 
 export default function GoalBoard({ goals, focusId }: { goals: Record<GoalStatus, Goal[]>; focusId?: string }) {
