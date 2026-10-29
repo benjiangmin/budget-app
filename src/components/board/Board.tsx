@@ -17,9 +17,9 @@ import {
 } from "@dnd-kit/core";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 
-// A drag-and-drop board shared by the Games and Anime pages.
+// A drag-and-drop board shared by the Games, Anime and Goals pages.
 //
-// Layout (one black-bordered box):
+// Default layout (one black-bordered box):
 //   ┌──────────────────────┬──────────────┐
 //   │ Completed            │ In progress  │
 //   │ (wide: cards in two  ├──────────────┤
@@ -27,6 +27,8 @@ import { useConfirm } from "@/components/ui/ConfirmDialog";
 //   ├──────────────────────┴──────────────┤
 //   │ Backlog / Plan to watch (one row)   │
 //   └─────────────────────────────────────┘
+// Or pass `columns` for equal columns side by side (Goals: Yet to start | In progress | Completed),
+// with the leftover status as the bottom row (Dropped).
 // Each area scrolls inside itself. Drag a card to another area to change its status.
 
 export type Status = "completed" | "playing" | "stopped" | "backlog";
@@ -48,9 +50,20 @@ export type BoardConfig<T extends BoardItem> = {
   onMove: (item: T, to: Status, today: string) => Promise<void>;
   onDelete: (item: T) => Promise<void>;
   editor: (item: T, done: () => void) => ReactNode; // the edit form, shown inside the card
+  // Optional: equal columns in this order (left to right); the status not listed becomes the bottom row.
+  columns?: Status[];
+  // Optional: what an open card shows under its title (instead of the plain note). Return null for nothing.
+  body?: (item: T) => ReactNode | null;
   // Mascots pinned to a corner of an area (trimmed by it). See the className for size/position.
   mascots?: Partial<Record<Status, { src: string; className: string }>>;
 };
+
+// The shortest the board gets on wide screens, so each area shows ~6 cards before it scrolls inside:
+// an area = title (3.25rem) + 6 cards (40px each + 8px gaps ≈ 18.25rem) ≈ 21.5rem; the bottom row ≈ 6.5rem.
+//   split   (Games, Anime): two areas stacked on the right → 2 × 21.5 + 6.5 = 49.5rem
+//   columns (Goals):        one area per column            →     21.5 + 6.5 = 28rem
+// Raise/lower these to show more/fewer cards.
+const MIN_HEIGHT = { split: "md:min-h-[49.5rem]", columns: "md:min-h-[28rem]" };
 
 function todayKey() {
   const d = new Date();
@@ -108,34 +121,51 @@ export default function Board<T extends BoardItem>({
     startTransition(() => config.onMove(item, to, today));
   }
 
+  const ALL: Status[] = ["completed", "playing", "stopped", "backlog"];
+  const bottom: Status = config.columns ? (ALL.find((s) => !config.columns!.includes(s)) ?? "backlog") : "backlog";
+
   const card = (item: T, floating = false) => (
     <Card key={item.id} item={item} focused={item.id === focusId} config={config} floating={floating} />
   );
 
   return (
     <DndContext id={config.id} sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
-      {/* The black box. Wide screens: fills the rest of the screen and never grows with the
-          number of items (min-h keeps it usable on short screens; the page scrolls a little then). */}
+      {/* The black box. Wide screens: fills the rest of the screen and never grows with the number of
+          items. Short screens: the box never gets shorter than "every area fits ~6 cards" (MIN_HEIGHT
+          below), so the page scrolls instead. */}
       <section
-        aria-label={`${config.labels.completed}, ${config.labels.playing}, ${config.labels.stopped}`}
+        aria-label={ALL.filter((s) => s !== bottom).map((s) => config.labels[s]).join(", ")}
         data-board
-        className="mt-5 flex flex-col overflow-hidden rounded-card border-[1.5px] border-ink md:min-h-[30rem] md:flex-1 md:basis-0"
+        className={`mt-5 flex flex-col overflow-hidden rounded-card border-[1.5px] border-ink md:flex-1 md:basis-0 ${
+          config.columns ? MIN_HEIGHT.columns : MIN_HEIGHT.split
+        }`}
       >
         {/* Completed takes the left 2/3 (both rows); the other two stack on the right.
             Width split: md:grid-cols-[2fr_1fr]. */}
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] divide-y divide-line md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:grid-rows-2 md:divide-y-0">
-          <Area status="completed" label={config.labels.completed} count={board.completed.length} mascot={config.mascots?.completed} className="md:row-span-2 md:border-r md:border-line" wide>
-            {board.completed.map((it) => card(it))}
-          </Area>
-          <Area status="playing" label={config.labels.playing} count={board.playing.length} mascot={config.mascots?.playing}>
-            {board.playing.map((it) => card(it))}
-          </Area>
-          <Area status="stopped" label={config.labels.stopped} count={board.stopped.length} mascot={config.mascots?.stopped} className="md:border-t md:border-line">
-            {board.stopped.map((it) => card(it))}
-          </Area>
-        </div>
-        <BottomRow label={config.labels.backlog} count={board.backlog.length} empty={config.emptyBottomRow}>
-          {board.backlog.map((item) => (
+        {config.columns ? (
+          // Equal columns with a thin line between them.
+          <div className={`grid flex-1 grid-cols-[minmax(0,1fr)] divide-y divide-line md:grid-cols-3 md:divide-x md:divide-y-0 min-h-0`}>
+            {config.columns.map((s) => (
+              <Area key={s} status={s} label={config.labels[s]} count={board[s].length} mascot={config.mascots?.[s]}>
+                {board[s].map((it) => card(it))}
+              </Area>
+            ))}
+          </div>
+        ) : (
+          <div className={`grid flex-1 grid-cols-[minmax(0,1fr)] divide-y divide-line md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:grid-rows-2 md:divide-y-0 min-h-0`}>
+            <Area status="completed" label={config.labels.completed} count={board.completed.length} mascot={config.mascots?.completed} className="md:row-span-2 md:border-r md:border-line" wide>
+              {board.completed.map((it) => card(it))}
+            </Area>
+            <Area status="playing" label={config.labels.playing} count={board.playing.length} mascot={config.mascots?.playing}>
+              {board.playing.map((it) => card(it))}
+            </Area>
+            <Area status="stopped" label={config.labels.stopped} count={board.stopped.length} mascot={config.mascots?.stopped} className="md:border-t md:border-line">
+              {board.stopped.map((it) => card(it))}
+            </Area>
+          </div>
+        )}
+        <BottomRow status={bottom} label={config.labels[bottom]} count={board[bottom].length} empty={config.emptyBottomRow}>
+          {board[bottom].map((item) => (
             <div key={item.id} className="w-60 shrink-0">
               {card(item, true)}
             </div>
@@ -202,8 +232,20 @@ function Area({
   );
 }
 
-function BottomRow({ label, count, empty, children }: { label: string; count: number; empty: string; children: ReactNode[] }) {
-  const { setNodeRef, isOver } = useDroppable({ id: "backlog" });
+function BottomRow({
+  status,
+  label,
+  count,
+  empty,
+  children,
+}: {
+  status: Status;
+  label: string;
+  count: number;
+  empty: string;
+  children: ReactNode[];
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
     <div ref={setNodeRef} className={`shrink-0 border-t-[1.5px] border-ink transition-colors ${isOver ? "bg-surface/60" : ""}`}>
       <div className="flex items-baseline gap-3 px-4 pb-1 pt-3">
@@ -388,6 +430,8 @@ function CardFace<T extends BoardItem>({
   const date = config.leftDate?.(item) ?? null;
   const detail = config.detail?.(item) ?? "";
   const tag = config.tag?.(item) ?? null;
+  // What shows under the title when open: the board's own body (Goals: why + proof), or the note.
+  const body: ReactNode = config.body ? config.body(item) : item.note;
 
   const actions = (
     <div className="flex justify-center gap-0.5">
@@ -434,7 +478,7 @@ function CardFace<T extends BoardItem>({
               </span>
             )}
             {/* Has a note: a small speech bubble (only while closed). */}
-            {item.note && !open && (
+            {body && !open && (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-label="Has a note" className="shrink-0 text-muted">
                 <title>Has a note</title>
                 <path d="M5 5h14v10H9l-4 4V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
@@ -445,10 +489,10 @@ function CardFace<T extends BoardItem>({
             <div className="pb-0.5">
               {detail && <p className="num text-xs text-muted">{detail}</p>}
               {/* A thin line between the title/dates and the note. */}
-              {item.note && (
-                <p className="mt-1.5 break-words border-t border-line pt-1.5 text-sm leading-relaxed text-ink/80">{item.note}</p>
+              {body && (
+                <div className="mt-1.5 break-words border-t border-line pt-1.5 text-sm leading-relaxed text-ink/80">{body}</div>
               )}
-              {!detail && !item.note && <p className="text-xs text-muted">No notes yet.</p>}
+              {!detail && !body && <p className="text-xs text-muted">No notes yet.</p>}
             </div>
           )}
         </div>
