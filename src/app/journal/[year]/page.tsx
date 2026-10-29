@@ -47,7 +47,7 @@ async function YearDocument({ year: raw, m, focus }: { year: string; m?: string 
     <>
       {/* Pinned to the top while you scroll: the title bar + search. z-40 keeps the month picker and
           search results above everything. */}
-      <StickyTop className="sticky top-0 z-40 -mx-4 shrink-0 bg-paper px-4 pb-1 pt-1">
+      <StickyTop className="sticky top-0 z-40 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-2 pt-3">
         {/* Title bar: the document's name (from its card on the home page) + the month switcher. */}
         <header className="relative z-40 flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-card bg-accent px-4 py-3 text-accent-ink shadow-lg shadow-ink/15 sm:px-5">
           <h1 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight sm:text-3xl">

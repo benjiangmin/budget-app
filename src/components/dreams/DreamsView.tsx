@@ -27,7 +27,7 @@ export default async function DreamsView({
     <>
       {/* Pinned to the top while you scroll: the year bar + search. z-40 keeps the year picker and
           search results above everything. */}
-      <StickyTop className="sticky top-0 z-40 -mx-4 shrink-0 bg-paper px-4 pb-1 pt-1">
+      <StickyTop className="sticky top-0 z-40 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-2 pt-3">
         {/* Year bar: arrows jump a year, click the year to pick any. */}
         <header className="relative z-40 flex shrink-0 items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
           <YearArrow year={year - 1} dir="prev" />

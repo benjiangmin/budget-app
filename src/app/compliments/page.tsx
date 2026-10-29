@@ -32,7 +32,7 @@ async function Compliments({ focus }: { focus?: string }) {
     <>
       {/* Pinned to the top while you scroll: the title + search. z-30 keeps the search results above
           the list. The add box below scrolls away. */}
-      <StickyTop className="sticky top-0 z-30 -mx-4 bg-paper px-4 pb-1 pt-1">
+      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-2 pt-3">
         <header className="rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
           <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Compliments</h1>
         </header>
@@ -41,7 +41,7 @@ async function Compliments({ focus }: { focus?: string }) {
 
       {/* The add box: a deeper oat with a thin coffee outline + soft shadow, so it stands out.
           z-20 keeps its date picker above the list. */}
-      <div className="relative z-20 mt-2 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
+      <div className="relative z-20 mt-1 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
         <ComplimentForm />
       </div>
 

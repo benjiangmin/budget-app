@@ -33,7 +33,7 @@ async function GoalsLog({ focus }: { focus?: string }) {
     <>
       {/* Pinned to the top while you scroll: the title + search. z-30 keeps the search results above
           everything. The add box below scrolls away. */}
-      <StickyTop className="sticky top-0 z-30 -mx-4 bg-paper px-4 pb-1 pt-1">
+      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-2 pt-3">
         <header className="flex items-baseline justify-between gap-4 rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
           <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Goals</h1>
           <p className="text-sm opacity-70">
@@ -44,7 +44,7 @@ async function GoalsLog({ focus }: { focus?: string }) {
       </StickyTop>
 
       {/* The add box. z-20 keeps its dropdowns above the board. */}
-      <div className="relative z-20 mt-2 shrink-0 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
+      <div className="relative z-20 mt-1 shrink-0 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
         <GoalForm />
       </div>
 

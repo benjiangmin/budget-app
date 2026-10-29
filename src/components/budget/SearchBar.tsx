@@ -119,7 +119,7 @@ export default function SearchBar() {
         }}
         placeholder="Search entries"
         aria-label="Search expenses by note"
-        className="w-full rounded-control border border-line bg-surface py-2.5 pl-10 pr-10 text-ink placeholder:text-muted focus:border-ink focus:bg-paper focus:outline-none"
+        className="w-full rounded-control border border-line bg-surface py-2.5 pl-10 pr-10 text-ink shadow-md shadow-ink/10 placeholder:text-muted focus:border-ink focus:bg-paper focus:outline-none"
       />
 
       {query && (

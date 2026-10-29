@@ -32,7 +32,7 @@ export default async function GratitudeView({
   return (
     <>
       {/* Month bar + search, pinned to the top while you scroll. */}
-      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-3 pt-3">
+      <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-2 pt-3">
         <header className="flex items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
           <MonthArrow href={`/gratitude?m=${prev}`} label={`Show ${monthLabel(prev).month}`} dir="prev" />
           <div className="text-center">
