@@ -23,6 +23,7 @@ const config: BoardConfig<Anime> = {
   editor: (a, done) => <AnimeForm anime={a} compact onDone={done} />,
   // Mascots sit behind the cards. className = where (bottom/right offsets), size (w-), tilt (rotate-).
   mascots: {
+    playing: { src: "/slaking.png", className: "-bottom-3 -left-3 w-36 lg:w-44" },
     stopped: { src: "/snorlax.png", className: "-bottom-3 -right-4 w-36 lg:w-44" },
   },
 };

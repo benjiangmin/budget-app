@@ -120,7 +120,7 @@ export default function SearchBox<T extends { id: string }>({
         }}
         placeholder={placeholder}
         aria-label={label}
-        className={`w-full rounded-control border border-line bg-surface py-2.5 pl-10 text-ink placeholder:text-muted focus:border-ink focus:bg-paper focus:outline-none ${
+        className={`w-full rounded-control border border-line bg-surface py-2.5 pl-10 text-ink shadow-md shadow-ink/10 placeholder:text-muted focus:border-ink focus:bg-paper focus:outline-none ${
           accessory ? "pr-52" : "pr-10"
         }`}
       />
