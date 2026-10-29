@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StickyTop from "@/components/ui/StickyTop";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { getAnime } from "@/lib/anime";
@@ -30,19 +31,21 @@ async function AnimeLog({ focus }: { focus?: string }) {
 
   return (
     <>
-      <header className="flex items-baseline justify-between gap-4 rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Anime</h1>
-        <p className="text-sm opacity-70">
-          {anime.completed.length} completed · {total} total
-        </p>
-      </header>
-
-      {/* Search + the add box. z-30 keeps their popups above the board. */}
-      <div className="relative z-30 shrink-0">
+      {/* Pinned to the top while you scroll: the title + search. z-30 keeps the search results above
+          everything. The add box below scrolls away. */}
+      <StickyTop className="sticky top-0 z-30 -mx-4 bg-paper px-4 pb-1 pt-1">
+        <header className="flex items-baseline justify-between gap-4 rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Anime</h1>
+          <p className="text-sm opacity-70">
+            {anime.completed.length} completed · {total} total
+          </p>
+        </header>
         <AnimeSearch />
-        <div className="mt-3 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
-          <AnimeForm />
-        </div>
+      </StickyTop>
+
+      {/* The add box. z-20 keeps its dropdowns above the board. */}
+      <div className="relative z-20 mt-2 shrink-0 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
+        <AnimeForm />
       </div>
 
       <AnimeBoard anime={anime} focusId={focus} />
