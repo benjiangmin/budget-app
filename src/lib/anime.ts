@@ -1,0 +1,32 @@
+import "server-only";
+import { db } from "./supabase";
+
+export type AnimeStatus = "playing" | "completed" | "stopped" | "backlog";
+export type Anime = { id: string; title: string; status: AnimeStatus; is_movie: boolean; note: string | null; position: number };
+
+const COLUMNS = "id, title, status, is_movie, note, position";
+
+// Newest added first; Plan to watch keeps its queue order (oldest first).
+export const animeSort = (status: string) =>
+  status === "backlog" ? (a: Anime, b: Anime) => a.position - b.position : (a: Anime, b: Anime) => b.position - a.position;
+
+export async function getAnime(): Promise<Record<AnimeStatus, Anime[]>> {
+  const { data, error } = await db().from("anime").select(COLUMNS);
+  if (error) throw new Error(`Couldn't load anime: ${error.message}`);
+  const out: Record<AnimeStatus, Anime[]> = { playing: [], completed: [], stopped: [], backlog: [] };
+  for (const a of data as Anime[]) out[a.status]?.push(a);
+  for (const s of Object.keys(out) as AnimeStatus[]) out[s].sort(animeSort(s));
+  return out;
+}
+
+export async function searchAnime(query: string, limit = 25): Promise<{ results: Anime[]; total: number }> {
+  const safe = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+  const { data, error, count } = await db()
+    .from("anime")
+    .select(COLUMNS, { count: "exact" })
+    .ilike("search_text", `%${safe}%`)
+    .order("position", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`Search failed: ${error.message}`);
+  return { results: data as Anime[], total: count ?? data.length };
+}
