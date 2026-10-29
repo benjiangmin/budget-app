@@ -30,19 +30,20 @@ async function Compliments({ focus }: { focus?: string }) {
 
   return (
     <>
-      <header className="rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Compliments</h1>
-      </header>
-
-      {/* Pinned while you scroll (wider screens; on phones it's too tall, so it scrolls away):
-          search + the add box. z-30 keeps their popups above the list. */}
-      <StickyTop className="relative z-30 -mx-4 bg-paper px-4 pb-3 pt-1 sm:sticky sm:top-0">
+      {/* Pinned to the top while you scroll: the title + search. z-30 keeps the search results above
+          the list. The add box below scrolls away. */}
+      <StickyTop className="sticky top-0 z-30 -mx-4 bg-paper px-4 pb-1 pt-1">
+        <header className="rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Compliments</h1>
+        </header>
         <ComplimentSearch />
-        {/* The add box: a deeper oat with a thin coffee outline + soft shadow, so it stands out. */}
-        <div className="mt-3 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
-          <ComplimentForm />
-        </div>
       </StickyTop>
+
+      {/* The add box: a deeper oat with a thin coffee outline + soft shadow, so it stands out.
+          z-20 keeps its date picker above the list. */}
+      <div className="relative z-20 mt-2 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
+        <ComplimentForm />
+      </div>
 
       <ComplimentList items={items} focusId={focus} />
     </>

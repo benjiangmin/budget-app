@@ -5,6 +5,7 @@ import { addAnime, updateAnime, type FormState } from "@/app/anime/actions";
 import type { Anime, AnimeStatus } from "@/lib/anime";
 import SelectPicker from "@/components/ui/SelectPicker";
 import { ANIME_LABELS } from "./labels";
+import AddBox from "@/components/board/AddBox";
 
 const initial: FormState = { ok: false, message: null };
 const field =
@@ -27,75 +28,134 @@ export default function AnimeForm({ anime, onDone, compact }: { anime?: Anime; o
       const el = form?.elements.namedItem(name) as HTMLInputElement | null;
       if (el) el.value = "";
     }
-    const movie = form?.elements.namedItem("is_movie") as HTMLInputElement | null;
-    if (movie) movie.checked = false;
     titleRef.current?.focus();
   }, [state.ok, state.savedAt, editing, onDone]);
 
+  const title = (
+    <input
+      ref={titleRef}
+      name="title"
+      required
+      maxLength={150}
+      defaultValue={anime?.title}
+      placeholder="Anime"
+      aria-label="Anime"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0 flex-1`}
+    />
+  );
+  const picker = (
+    <div className={compact ? "" : "w-36 shrink-0 sm:w-44"}>
+      <SelectPicker<AnimeStatus>
+        label="Status"
+        value={status}
+        options={ORDER.map((s) => ({ value: s, label: ANIME_LABELS[s] }))}
+        onChange={setStatus}
+      />
+    </div>
+  );
+  const note = (
+    <input
+      name="note"
+      maxLength={500}
+      defaultValue={anime?.note ?? ""}
+      placeholder="Note (optional)"
+      aria-label="Note"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0`}
+    />
+  );
+  const movie = (
+    <label className="flex cursor-pointer items-center gap-2 px-1 text-sm text-muted">
+      <input type="checkbox" name="is_movie" defaultChecked={anime?.is_movie} className="size-4 accent-[var(--accent)]" />
+      It&apos;s a movie
+    </label>
+  );
+
+  // The add box at the top of the page: a Movie toggle on the left | title + status, note | + button.
+  if (!compact) {
+    return (
+      <form ref={formRef} action={action}>
+        <input type="hidden" name="status" value={status} />
+        <AddBox
+          label="Add anime"
+          pending={pending}
+          message={state.message}
+          narrowSide
+          // Keyed on the last save, so it switches back off after adding.
+          side={<MovieToggle key={state.savedAt ?? 0} />}
+          rows={
+            <>
+              <div className="flex gap-2">
+                {title}
+                {picker}
+              </div>
+              {note}
+            </>
+          }
+        />
+      </form>
+    );
+  }
+
+  // Editing inside a card: everything stacked.
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-2">
       {anime && <input type="hidden" name="id" value={anime.id} />}
       <input type="hidden" name="status" value={status} />
-      {/* Title : note ≈ 30 : 70 on wider screens. */}
-      <div className={`flex flex-col gap-2 ${compact ? "" : "sm:flex-row sm:items-center"}`}>
-        <input
-          ref={titleRef}
-          name="title"
-          required
-          maxLength={150}
-          defaultValue={anime?.title}
-          placeholder="Anime"
-          aria-label="Anime"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 ${compact ? "" : "sm:w-[30%] sm:shrink-0"}`}
-        />
-        <div className={compact ? "" : "sm:w-44 sm:shrink-0"}>
-          <SelectPicker<AnimeStatus>
-            label="Status"
-            value={status}
-            options={ORDER.map((s) => ({ value: s, label: ANIME_LABELS[s] }))}
-            onChange={setStatus}
-          />
-        </div>
-        <input
-          name="note"
-          maxLength={500}
-          defaultValue={anime?.note ?? ""}
-          placeholder="Note (optional)"
-          aria-label="Note"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 flex-1`}
-        />
-      </div>
-      <div className={`flex flex-wrap items-center gap-2 ${compact ? "text-sm" : ""}`}>
-        <label className="flex items-center gap-2 px-1 text-sm text-muted">
-          <input type="checkbox" name="is_movie" defaultChecked={anime?.is_movie} className="size-4 accent-[var(--accent)]" />
-          It&apos;s a movie
-        </label>
-        <div className={`flex items-center gap-1.5 ${compact ? "w-full justify-end" : "ml-auto"}`}>
+      {title}
+      {picker}
+      {note}
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        {movie}
+        <div className="flex w-full items-center justify-end gap-1.5">
           {state.message && (
             <p role="status" className="text-sm text-danger">
               {state.message}
             </p>
           )}
-          {editing && (
-            <button
-              type="button"
-              onClick={onDone}
-              className="rounded-control px-3 py-2.5 text-sm text-muted transition-colors hover:bg-paper hover:text-ink"
-            >
-              Cancel
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onDone}
+            className="rounded-control px-3 py-2.5 text-sm text-muted transition-colors hover:bg-paper hover:text-ink"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={pending}
             className="rounded-control bg-accent px-5 py-2.5 font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {pending ? "Saving…" : editing ? "Save" : "Add"}
+            {pending ? "Saving…" : "Save"}
           </button>
         </div>
       </div>
     </form>
+  );
+}
+
+// The add box's Movie switch: a small tile with a film icon. On = filled coffee.
+function MovieToggle() {
+  const [isMovie, setIsMovie] = useState(false);
+  return (
+    <>
+      {isMovie && <input type="hidden" name="is_movie" value="on" />}
+      <button
+        type="button"
+        aria-pressed={isMovie}
+        onClick={() => setIsMovie((m) => !m)}
+        title={isMovie ? "It's a movie" : "Mark as a movie"}
+        className={`flex w-full flex-col items-center justify-center gap-1 rounded-control px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wide transition-colors sm:h-full sm:w-16 ${
+          isMovie ? "bg-accent/15 text-accent ring-1 ring-accent/50" : "border border-dashed border-muted/50 text-muted hover:border-muted hover:text-ink"
+        }`}
+      >
+        {/* A film strip. */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M8 3v18M16 3v18M4 8h4M4 12h4M4 16h4M16 8h4M16 12h4M16 16h4" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+        Movie
+      </button>
+    </>
   );
 }

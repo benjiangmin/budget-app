@@ -71,13 +71,13 @@ export default function ComplimentList({ items, focusId }: { items: Compliment[]
 
   return (
     <div className="mt-6 flex flex-1 flex-col">
-      {/* The box's top edge. Pins just under the search/add bar (--sticky-top is that bar's height;
-          on phones the bar isn't pinned, so this pins at the very top). The paper background hides
+      {/* The box's top edge. Pins just under the title/search bar (--sticky-top is that bar's height).
+          The paper background hides
           entries passing under it. data-stick-under hides the bar's own fade once this is pinned. */}
       <div
         ref={headingRef}
         data-stick-under
-        className="sticky top-0 z-20 bg-paper sm:top-[var(--sticky-top,0px)]"
+        className="sticky top-[var(--sticky-top,0px)] z-20 bg-paper"
       >
         <div className="flex items-baseline justify-between gap-3 rounded-t-card border-[1.5px] border-b-0 border-ink px-4 pb-2 pt-4 sm:px-6">
           <h2 className="num font-display text-xl font-semibold">{current}</h2>
@@ -100,13 +100,12 @@ export default function ComplimentList({ items, focusId }: { items: Compliment[]
       >
         {/* Mascot layer: one screen tall and sticky, so the mascots stay put on screen while the list
             scrolls past (and it takes no room: the negative bottom margin cancels its height).
-            It pins just under the pinned year bar (3.5rem tall), below the search/add bar on wider
-            screens. Behind the cards (z-0 vs z-[1]).
+            It pins just under the pinned year bar (3.5rem tall), below the title/search bar. Behind the cards (z-0 vs z-[1]).
             Tweak per image: w-.. = size, top/right/bottom/left = position (negative pushes it past
             the border), opacity-.. = fade, rotate-.. = tilt. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none sticky top-14 z-0 -mb-[calc(100dvh-3.5rem)] h-[calc(100dvh-3.5rem)] sm:top-[calc(var(--sticky-top,0px)+3.5rem)] sm:-mb-[calc(100dvh-var(--sticky-top,0px)-3.5rem)] sm:h-[calc(100dvh-var(--sticky-top,0px)-3.5rem)]"
+          className="pointer-events-none sticky top-[calc(var(--sticky-top,0px)+3.5rem)] z-0 -mb-[calc(100dvh-var(--sticky-top,0px)-3.5rem)] h-[calc(100dvh-var(--sticky-top,0px)-3.5rem)]"
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
           <img src="/togetic.png" alt="" className="absolute -right-8 top-4 w-36 select-none opacity-60 rotate-6 sm:w-44" />

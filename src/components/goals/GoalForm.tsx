@@ -6,6 +6,7 @@ import type { Goal, GoalStatus } from "@/lib/goals";
 import SelectPicker from "@/components/ui/SelectPicker";
 import OptionalDate from "@/components/games/OptionalDate";
 import { GOAL_LABELS, GOAL_ORDER } from "./labels";
+import AddBox from "@/components/board/AddBox";
 
 const initial: FormState = { ok: false, message: null };
 const field =
@@ -35,77 +36,117 @@ export default function GoalForm({ goal, onDone, compact }: { goal?: Goal; onDon
     titleRef.current?.focus();
   }, [state.ok, state.savedAt, editing, onDone]);
 
+  const title = (
+    <input
+      ref={titleRef}
+      name="title"
+      required
+      maxLength={200}
+      defaultValue={goal?.title}
+      placeholder="Goal"
+      aria-label="Goal"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0 flex-1`}
+    />
+  );
+  const picker = (
+    <div className={compact ? "" : "w-36 shrink-0 sm:w-44"}>
+      <SelectPicker<GoalStatus>
+        label="Status"
+        value={status}
+        options={GOAL_ORDER.map((s) => ({ value: s, label: GOAL_LABELS[s] }))}
+        onChange={setStatus}
+      />
+    </div>
+  );
+  const why = (
+    <input
+      name="why"
+      maxLength={500}
+      defaultValue={goal?.why ?? ""}
+      placeholder="Why (optional)"
+      aria-label="Why"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0 flex-1`}
+    />
+  );
+  const proof = (
+    <input
+      name="proof"
+      maxLength={500}
+      defaultValue={goal?.proof ?? ""}
+      placeholder="Proof link (optional)"
+      aria-label="Proof"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0 ${compact ? "" : "sm:w-[35%] sm:shrink-0"}`}
+    />
+  );
+
+  // The add box at the top of the page: dates on the left | goal + status, why + proof | + button.
+  if (!compact) {
+    return (
+      <form ref={formRef} action={action}>
+        <input type="hidden" name="status" value={status} />
+        <AddBox
+          label="Add goal"
+          pending={pending}
+          message={state.message}
+          // Keyed on the last save, so the dates reset after adding. A new goal starts today.
+          side={
+            <div key={state.savedAt ?? 0} className="contents">
+              <OptionalDate name="started_on" label="Start" defaultValue={todayKey()} block />
+              <OptionalDate name="finished_on" label="Completed" defaultValue={null} block />
+            </div>
+          }
+          rows={
+            <>
+              <div className="flex gap-2">
+                {title}
+                {picker}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                {why}
+                {proof}
+              </div>
+            </>
+          }
+        />
+      </form>
+    );
+  }
+
+  // Editing inside a card: everything stacked.
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-2">
       {goal && <input type="hidden" name="id" value={goal.id} />}
       <input type="hidden" name="status" value={status} />
-      {/* Row 1: goal (≈35%), status, why (the rest). */}
-      <div className={`flex flex-col gap-2 ${compact ? "" : "sm:flex-row sm:items-center"}`}>
-        <input
-          ref={titleRef}
-          name="title"
-          required
-          maxLength={200}
-          defaultValue={goal?.title}
-          placeholder="Goal"
-          aria-label="Goal"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 ${compact ? "" : "sm:w-[35%] sm:shrink-0"}`}
-        />
-        <div className={compact ? "" : "sm:w-44 sm:shrink-0"}>
-          <SelectPicker<GoalStatus>
-            label="Status"
-            value={status}
-            options={GOAL_ORDER.map((s) => ({ value: s, label: GOAL_LABELS[s] }))}
-            onChange={setStatus}
-          />
-        </div>
-        <input
-          name="why"
-          maxLength={500}
-          defaultValue={goal?.why ?? ""}
-          placeholder="Why (optional)"
-          aria-label="Why"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 flex-1`}
-        />
-      </div>
-      {/* Row 2: proof, dates, buttons. Keyed on the last save, so the dates reset after adding. */}
-      <div key={editing ? "edit" : (state.savedAt ?? 0)} className={`flex flex-wrap items-center gap-2 ${compact ? "text-sm" : ""}`}>
-        <input
-          name="proof"
-          maxLength={500}
-          defaultValue={goal?.proof ?? ""}
-          placeholder="Proof link (optional)"
-          aria-label="Proof"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 ${compact ? "" : "sm:w-[35%]"}`}
-        />
-        {/* A new goal starts today; change or remove it if you like. */}
-        <OptionalDate name="started_on" label="Start" defaultValue={editing ? (goal?.started_on ?? null) : todayKey()} />
+      {title}
+      {picker}
+      {why}
+      {proof}
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <OptionalDate name="started_on" label="Start" defaultValue={goal?.started_on ?? null} />
         <span className="text-muted/60" aria-hidden="true">→</span>
         <OptionalDate name="finished_on" label="Completed" defaultValue={goal?.finished_on ?? null} />
-        <div className={`flex items-center gap-1.5 ${compact ? "w-full justify-end" : "ml-auto"}`}>
+        <div className="flex w-full items-center justify-end gap-1.5">
           {state.message && (
             <p role="status" className="text-sm text-danger">
               {state.message}
             </p>
           )}
-          {editing && (
-            <button
-              type="button"
-              onClick={onDone}
-              className="rounded-control px-3 py-2.5 text-sm text-muted transition-colors hover:bg-paper hover:text-ink"
-            >
-              Cancel
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onDone}
+            className="rounded-control px-3 py-2.5 text-sm text-muted transition-colors hover:bg-paper hover:text-ink"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={pending}
             className="rounded-control bg-accent px-5 py-2.5 font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {pending ? "Saving…" : editing ? "Save" : "Add goal"}
+            {pending ? "Saving…" : "Save"}
           </button>
         </div>
       </div>

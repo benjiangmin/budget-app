@@ -7,6 +7,7 @@ import { MONTH_NAMES, inDoc, monthYear } from "@/lib/journal-years";
 import JournalMonthPicker from "@/components/journal/JournalMonthPicker";
 import JournalSearch from "@/components/journal/JournalSearch";
 import JournalWorkspace from "@/components/journal/JournalWorkspace";
+import StickyTop from "@/components/ui/StickyTop";
 import YearSetting from "@/components/journal/YearSetting";
 
 // One unsuspicious document = one year of journaling. Every year uses this same page (/journal/2026).
@@ -44,21 +45,25 @@ async function YearDocument({ year: raw, m, focus }: { year: string; m?: string 
 
   return (
     <>
-      {/* Title bar: the document's name (from its card on the home page) + the month switcher. */}
-      <header className="relative z-40 flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-card bg-accent px-4 py-3 text-accent-ink shadow-lg shadow-ink/15 sm:px-5">
-        <h1 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-          {name ?? "Unsuspicious document"}
-        </h1>
-        <JournalMonthPicker year={year} start={start} month={month} />
-      </header>
+      {/* Pinned to the top while you scroll: the title bar + search. z-40 keeps the month picker and
+          search results above everything. */}
+      <StickyTop className="sticky top-0 z-40 -mx-4 shrink-0 bg-paper px-4 pb-1 pt-1">
+        {/* Title bar: the document's name (from its card on the home page) + the month switcher. */}
+        <header className="relative z-40 flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-card bg-accent px-4 py-3 text-accent-ink shadow-lg shadow-ink/15 sm:px-5">
+          <h1 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+            {name ?? "Unsuspicious document"}
+          </h1>
+          <JournalMonthPicker year={year} start={start} month={month} />
+        </header>
 
-      {/* The document's year in its own box (click it to change when the year starts), next to search. */}
-      <div className="relative z-30 flex shrink-0 items-start gap-2">
-        <YearSetting year={year} start={start} />
-        <div className="min-w-0 flex-1">
-          <JournalSearch year={year} />
+        {/* The document's year in its own box (click it to change when the year starts), next to search. */}
+        <div className="relative z-30 flex shrink-0 items-start gap-2">
+          <YearSetting year={year} start={start} />
+          <div className="min-w-0 flex-1">
+            <JournalSearch year={year} />
+          </div>
         </div>
-      </div>
+      </StickyTop>
 
       <JournalWorkspace
         key={`${year}-${start}`}

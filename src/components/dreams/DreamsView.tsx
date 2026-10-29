@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getDreamsForYear } from "@/lib/dreams";
 import YearPicker from "@/components/ui/YearPicker";
+import StickyTop from "@/components/ui/StickyTop";
 import DreamForm from "./DreamForm";
 import DreamList from "./DreamList";
 import DreamSearch from "./DreamSearch";
@@ -24,27 +25,29 @@ export default async function DreamsView({
 
   return (
     <>
-      {/* Year bar: arrows jump a year, click the year to pick any. */}
-      <header className="relative z-40 flex shrink-0 items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
-        <YearArrow year={year - 1} dir="prev" />
-        <div className="text-center">
-          <h1 className="flex items-center gap-1">
-            <span className="hidden font-display text-2xl font-semibold tracking-tight opacity-60 sm:inline sm:text-3xl">
-              Dreams
-            </span>
-            <YearPicker year={year} />
-          </h1>
-          {!isThisYear && (
-            <Link href="/dreams" className="text-sm opacity-70 underline-offset-4 hover:underline hover:opacity-100">
-              Jump to this year
-            </Link>
-          )}
-        </div>
-        <YearArrow year={year + 1} dir="next" />
-      </header>
-      <div className="relative z-30 shrink-0">
+      {/* Pinned to the top while you scroll: the year bar + search. z-40 keeps the year picker and
+          search results above everything. */}
+      <StickyTop className="sticky top-0 z-40 -mx-4 shrink-0 bg-paper px-4 pb-1 pt-1">
+        {/* Year bar: arrows jump a year, click the year to pick any. */}
+        <header className="relative z-40 flex shrink-0 items-center justify-between gap-4 rounded-card bg-accent px-3 py-2.5 text-accent-ink shadow-lg shadow-ink/15">
+          <YearArrow year={year - 1} dir="prev" />
+          <div className="text-center">
+            <h1 className="flex items-center gap-1">
+              <span className="hidden font-display text-2xl font-semibold tracking-tight opacity-60 sm:inline sm:text-3xl">
+                Dreams
+              </span>
+              <YearPicker year={year} />
+            </h1>
+            {!isThisYear && (
+              <Link href="/dreams" className="text-sm opacity-70 underline-offset-4 hover:underline hover:opacity-100">
+                Jump to this year
+              </Link>
+            )}
+          </div>
+          <YearArrow year={year + 1} dir="next" />
+        </header>
         <DreamSearch />
-      </div>
+      </StickyTop>
 
       {/* Two columns on wide screens: writing on the left, the list on the right.
           Column widths: the 5fr / 7fr split. On phones they stack.

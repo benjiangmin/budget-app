@@ -5,6 +5,7 @@ import { addGame, updateGame, type FormState } from "@/app/games/actions";
 import type { Game, GameStatus } from "@/lib/games";
 import SelectPicker from "@/components/ui/SelectPicker";
 import OptionalDate from "./OptionalDate";
+import AddBox from "@/components/board/AddBox";
 
 const initial: FormState = { ok: false, message: null };
 
@@ -19,7 +20,7 @@ const field =
   "w-full rounded-control border border-line bg-paper px-3 py-2.5 text-ink placeholder:text-muted/70 focus:border-ink";
 
 // "Add a game" (pinned at the top), also used to edit one (pass `game`).
-// compact: stacked layout, for editing inside a narrow board column.
+// compact: stacked layout, for editing inside a card.
 export default function GameForm({ game, onDone, compact }: { game?: Game; onDone?: () => void; compact?: boolean }) {
   const editing = Boolean(game);
   const [state, action, pending] = useActionState(editing ? updateGame : addGame, initial);
@@ -38,47 +39,84 @@ export default function GameForm({ game, onDone, compact }: { game?: Game; onDon
     titleRef.current?.focus();
   }, [state.ok, state.savedAt, editing, onDone]);
 
+  const title = (
+    <input
+      ref={titleRef}
+      name="title"
+      required
+      maxLength={120}
+      defaultValue={game?.title}
+      placeholder="Game"
+      aria-label="Game"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0 flex-1`}
+    />
+  );
+  const picker = (
+    <div className={compact ? "" : "w-36 shrink-0 sm:w-44"}>
+      <SelectPicker<GameStatus>
+        label="Status"
+        value={status}
+        options={(Object.keys(STATUS_LABELS) as GameStatus[]).map((s) => ({ value: s, label: STATUS_LABELS[s] }))}
+        onChange={setStatus}
+      />
+    </div>
+  );
+  const note = (
+    <input
+      name="note"
+      maxLength={500}
+      defaultValue={game?.note ?? ""}
+      placeholder="Note (optional)"
+      aria-label="Note"
+      style={{ outline: "none" }}
+      className={`${field} min-w-0`}
+    />
+  );
+
+  // The add box at the top of the page: dates on the left | title + status, note | + button.
+  if (!compact) {
+    return (
+      <form ref={formRef} action={action}>
+        <input type="hidden" name="status" value={status} />
+        <AddBox
+          label="Add game"
+          pending={pending}
+          message={state.message}
+          // Keyed on the last save time, so the dates reset after adding a game.
+          side={
+            <div key={state.savedAt ?? 0} className="contents">
+              <OptionalDate name="started_on" label="Start" defaultValue={game?.started_on ?? null} block />
+              <OptionalDate name="finished_on" label="End" defaultValue={game?.finished_on ?? null} block />
+            </div>
+          }
+          rows={
+            <>
+              <div className="flex gap-2">
+                {title}
+                {picker}
+              </div>
+              {note}
+            </>
+          }
+        />
+      </form>
+    );
+  }
+
+  // Editing inside a card: everything stacked.
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-2">
       {game && <input type="hidden" name="id" value={game.id} />}
       <input type="hidden" name="status" value={status} />
-      {/* Title : note ≈ 30 : 70 on wider screens (sm:w-[30%] on the title, the note takes the rest). */}
-      <div className={`flex flex-col gap-2 ${compact ? "" : "sm:flex-row sm:items-center"}`}>
-        <input
-          ref={titleRef}
-          name="title"
-          required
-          maxLength={120}
-          defaultValue={game?.title}
-          placeholder="Game"
-          aria-label="Game"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 ${compact ? "" : "sm:w-[30%] sm:shrink-0"}`}
-        />
-        <div className={compact ? "" : "sm:w-44 sm:shrink-0"}>
-          <SelectPicker<GameStatus>
-            label="Status"
-            value={status}
-            options={(Object.keys(STATUS_LABELS) as GameStatus[]).map((s) => ({ value: s, label: STATUS_LABELS[s] }))}
-            onChange={setStatus}
-          />
-        </div>
-        <input
-          name="note"
-          maxLength={500}
-          defaultValue={game?.note ?? ""}
-          placeholder="Note (optional)"
-          aria-label="Note"
-          style={{ outline: "none" }}
-          className={`${field} min-w-0 flex-1`}
-        />
-      </div>
-      {/* Keyed on the last save time, so the dates reset after adding a game. */}
-      <div key={editing ? "edit" : (state.savedAt ?? 0)} className={`flex flex-wrap items-center gap-2 ${compact ? "text-sm" : ""}`}>
+      {title}
+      {picker}
+      {note}
+      <div key="edit" className="flex flex-wrap items-center gap-2 text-sm">
         <OptionalDate name="started_on" label="Start" defaultValue={game?.started_on ?? null} />
         <span className="text-muted/60" aria-hidden="true">→</span>
         <OptionalDate name="finished_on" label="End" defaultValue={game?.finished_on ?? null} />
-        <div className={`flex items-center gap-1.5 ${compact ? "w-full justify-end" : "ml-auto"}`}>
+        <div className="flex w-full items-center justify-end gap-1.5">
           {state.message && (
             <p role="status" className="text-sm text-danger">
               {state.message}
@@ -98,7 +136,7 @@ export default function GameForm({ game, onDone, compact }: { game?: Game; onDon
             disabled={pending}
             className="rounded-control bg-accent px-5 py-2.5 font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {pending ? "Saving…" : editing ? "Save" : "Add game"}
+            {pending ? "Saving…" : "Save"}
           </button>
         </div>
       </div>

@@ -9,15 +9,17 @@ function todayKey() {
 }
 
 // A date that's optional: "+ Start" until you click it, then a date picker with × to remove it.
-// Submits "" when there's no date.
+// Submits "" when there's no date. block: fills the width it's given (the add box's date column).
 export default function OptionalDate({
   name,
   label,
   defaultValue,
+  block = false,
 }: {
   name: string;
   label: string;
   defaultValue: string | null;
+  block?: boolean;
 }) {
   const [value, setValue] = useState<string | null>(defaultValue);
 
@@ -28,7 +30,7 @@ export default function OptionalDate({
         <button
           type="button"
           onClick={() => setValue(todayKey())}
-          className="whitespace-nowrap rounded-control border border-dashed border-muted/50 px-3 py-2.5 text-sm text-muted transition-colors hover:border-muted hover:text-ink"
+          className={`${block ? "h-11 w-full text-left" : ""} whitespace-nowrap rounded-control border border-dashed border-muted/50 px-3 py-2.5 text-sm text-muted transition-colors hover:border-muted hover:text-ink`}
         >
           + {label}
         </button>
@@ -37,8 +39,8 @@ export default function OptionalDate({
   }
 
   return (
-    <div className="flex items-center gap-0.5">
-      <div className="w-36">
+    <div className={`flex items-center gap-0.5 ${block ? "w-full" : ""}`}>
+      <div className={block ? "min-w-0 flex-1" : "w-36"}>
         <DateWheel name={name} defaultValue={value} />
       </div>
       <button
