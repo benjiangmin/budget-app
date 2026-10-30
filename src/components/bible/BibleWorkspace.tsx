@@ -305,7 +305,7 @@ function Reading({
           placeholder={example}
           aria-label={`${title} passage`}
           style={{ outline: "none" }}
-          className="min-w-0 flex-1 rounded-control border border-line bg-paper px-3 py-2 font-semibold text-ink placeholder:font-normal placeholder:text-muted/70 focus:border-ink"
+          className="min-w-0 flex-1 rounded-control border border-line bg-paper px-3 py-2 font-medium text-ink placeholder:font-normal placeholder:text-muted/70 focus:border-ink"
         />
       </div>
       <RichText initial={notes} onChange={onNotes} onFiles={() => {}} placeholder="Notes…" label={`${title} notes`} />
@@ -575,7 +575,7 @@ function Passage({ label, text }: { label: string; text: string }) {
   return (
     <span className="flex items-baseline gap-2">
       <span className="w-6 shrink-0 text-[11px] font-semibold tracking-wide text-muted/70">{label}</span>
-      <span className={`min-w-0 break-words ${text ? "font-semibold text-ink" : "text-muted/60"}`}>{text || "—"}</span>
+      <span className={`min-w-0 break-words ${text ? "font-medium text-ink" : "text-muted/60"}`}>{text || "—"}</span>
     </span>
   );
 }
