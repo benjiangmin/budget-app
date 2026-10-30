@@ -2,7 +2,7 @@
 create table if not exists parks (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  park_code text,                        -- the National Park Service's code (e.g. 'yell'), for its photo
+  park_code text,                        -- the National Park Service's code (e.g. 'yell'); not used anymore
   visited boolean not null default false,
   note text,                             -- optional, e.g. "best stars i've seen"
   custom boolean not null default false, -- added by hand (not a national park, out of the country…)

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition, type CSSProperties, type ReactNode } from "react";
-import { deletePark, setVisited } from "@/app/parks/actions";
+import { createPortal } from "react-dom";
+import { deletePark, removeParkPhoto, setVisited, uploadParkPhoto } from "@/app/parks/actions";
+import { shrinkImage } from "@/lib/shrink-image";
 import type { Park } from "@/lib/parks";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import ParkForm from "./ParkForm";
@@ -161,7 +163,7 @@ function Column({
               {parks.length === 0 ? (
                 <p className="mt-1 rounded-card border border-dashed border-line px-5 py-6 text-muted">{empty}</p>
               ) : (
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {parks.map((p) => (
                     <ParkItem key={p.id} park={p} focused={p.id === focusId} />
                   ))}
@@ -186,7 +188,11 @@ function ParkItem({ park, focused }: { park: Park; focused: boolean }) {
   }, [focused]);
 
   async function remove() {
-    const ok = await confirm({ title: `Delete ${park.name}?`, body: "It'll be removed from your list for good.", confirmLabel: "Delete" });
+    const ok = await confirm({
+      title: `Delete ${park.name}?`,
+      body: `It'll be removed from your list for good${park.photo_path ? ", with its photo" : ""}.`,
+      confirmLabel: "Delete",
+    });
     if (ok) startTransition(() => deletePark(park.id));
   }
 
@@ -199,21 +205,23 @@ function ParkItem({ park, focused }: { park: Park; focused: boolean }) {
   }
 
   return (
+    // Card size: py-3 + the 4rem (size-16) photo tile.
     <li
       ref={ref}
-      className={`group flex items-center gap-3 rounded-card bg-surface/80 px-2.5 py-2 transition-opacity ${pending ? "opacity-40" : ""} ${
+      className={`group flex items-center gap-4 rounded-card bg-surface/80 px-3 py-3 transition-opacity ${pending ? "opacity-40" : ""} ${
         focused ? "flash" : ""
       }`}
     >
-      <Badge park={park} />
+      {/* Visited: your photo (or a spot to add one). Not yet: the park's initials. */}
+      {park.visited ? <PhotoTile park={park} /> : <Initials name={park.name} />}
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 font-medium text-ink">
+        <p className="flex items-center gap-2 text-[17px] font-medium text-ink">
           <span className="min-w-0 truncate">{park.name}</span>
           {park.custom && (
             <span className="shrink-0 rounded-full bg-paper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">Other</span>
           )}
         </p>
-        {park.note && <p className="break-words text-sm leading-snug text-muted">{park.note}</p>}
+        {park.note && <p className="mt-0.5 break-words text-sm leading-snug text-muted">{park.note}</p>}
       </div>
       <div className="-my-1 flex shrink-0">
         <IconButton
@@ -238,37 +246,171 @@ function ParkItem({ park, focused }: { park: Park; focused: boolean }) {
   );
 }
 
-// The park's photo (from the National Park Service), or its initials when there isn't one.
-function Badge({ park }: { park: Park }) {
-  const [broken, setBroken] = useState(false);
-  const initials = park.name
+// A not-yet park: its initials in a circle (same size as the photo tiles).
+function Initials({ name }: { name: string }) {
+  const initials = name
     .split(/\s+/)
     .filter((w) => /^[A-Za-z]/.test(w))
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
     .join("");
-  if (park.photo && !broken) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- a small outside picture
-      <img
-        src={park.photo}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        onError={() => setBroken(true)}
-        className={`size-10 shrink-0 rounded-full object-cover ring-1 ring-line ${park.visited ? "" : "opacity-70 grayscale"}`}
-      />
-    );
-  }
   return (
-    <span
-      aria-hidden="true"
-      className={`grid size-10 shrink-0 place-items-center rounded-full font-display text-sm font-semibold ${
-        park.visited ? "bg-accent text-accent-ink" : "bg-line text-muted"
-      }`}
-    >
+    <span aria-hidden="true" className="grid size-16 shrink-0 place-items-center rounded-full bg-line font-display text-lg font-semibold text-muted">
       {initials || "•"}
     </span>
+  );
+}
+
+// A visited park's photo: a rounded square (same corners as the cards). No photo yet: a dashed
+// "+ Photo" tile that opens your files. Click a photo to see it big, change it or remove it.
+function PhotoTile({ park }: { park: Park }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [viewing, setViewing] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function upload(file: File | undefined) {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    const form = new FormData();
+    form.append("file", await shrinkImage(file));
+    const res = await uploadParkPhoto(park.id, form);
+    setBusy(false);
+    if (!res.ok) setError(res.message);
+    else setViewing(false);
+  }
+
+  const input = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept="image/*"
+      className="sr-only"
+      onChange={(e) => {
+        upload(e.target.files?.[0]);
+        e.target.value = "";
+      }}
+    />
+  );
+
+  return (
+    <div className="relative shrink-0">
+      {input}
+      {park.photo ? (
+        <button
+          type="button"
+          onClick={() => setViewing(true)}
+          aria-label={`See your photo from ${park.name}`}
+          title="See photo"
+          className="block size-16 overflow-hidden rounded-card ring-1 ring-line transition-opacity hover:opacity-90"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- temporary private link */}
+          <img src={park.photo} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          aria-label={`Add a photo from ${park.name}`}
+          title="Add a photo"
+          className="flex size-16 flex-col items-center justify-center gap-0.5 rounded-card border-[1.5px] border-dashed border-muted/50 text-muted transition-colors hover:border-accent hover:text-accent"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3" y="6" width="18" height="14" rx="3" stroke="currentColor" strokeWidth="1.8" />
+            <circle cx="12" cy="13" r="3.5" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M8.5 6l1.5-2.5h4L15.5 6" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[10px] font-semibold uppercase tracking-wide">Photo</span>
+        </button>
+      )}
+      {busy && (
+        <span className="absolute inset-0 grid place-items-center rounded-card bg-paper/80">
+          <span className="size-5 animate-spin rounded-full border-2 border-accent/30 border-t-accent" aria-label="Uploading" />
+        </span>
+      )}
+      {error && (
+        <p role="alert" className="absolute left-0 top-full z-10 mt-1 w-48 rounded-control bg-paper px-2 py-1 text-xs text-danger shadow">
+          {error}
+        </p>
+      )}
+
+      {viewing && park.photo &&
+        createPortal(
+          <PhotoViewer
+            name={park.name}
+            src={park.photo}
+            busy={busy}
+            onClose={() => setViewing(false)}
+            onChange={() => fileRef.current?.click()}
+            onRemove={async () => {
+              setBusy(true);
+              await removeParkPhoto(park.id);
+              setBusy(false);
+              setViewing(false);
+            }}
+          />,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+// The photo, big, over the page. Escape / clicking outside closes it.
+function PhotoViewer({
+  name,
+  src,
+  busy,
+  onClose,
+  onChange,
+  onRemove,
+}: {
+  name: string;
+  src: string;
+  busy: boolean;
+  onClose: () => void;
+  onChange: () => void;
+  onRemove: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div role="dialog" aria-label={`Photo from ${name}`} className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4" onClick={onClose}>
+      <div className="panel-pop flex max-h-full max-w-3xl flex-col gap-3 rounded-card bg-paper p-3 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- temporary private link */}
+        <img src={src} alt={`Your photo from ${name}`} className="max-h-[70dvh] min-h-0 w-auto rounded-control object-contain" />
+        <div className="flex items-center gap-2">
+          <p className="mr-auto font-display font-semibold">{name}</p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onRemove}
+            className="rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-danger disabled:opacity-50"
+          >
+            Remove
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onChange}
+            className="rounded-control px-3 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-ink disabled:opacity-50"
+          >
+            {busy ? "Uploading…" : "Change"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink hover:opacity-90"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
