@@ -51,7 +51,7 @@ export default function ShoppingBoard({ toBuy, bought, focusId }: { toBuy: Shopp
       <ListBox
         title="To buy"
         count={toBuy.length}
-        empty="Nothing to buy. Add something above."
+        empty="Nothing to buy. Good lets keep it that way."
         className="h-[65dvh] min-h-[20rem] lg:h-auto lg:min-h-0 lg:flex-1"
         veiled={veil > 0}
       >
