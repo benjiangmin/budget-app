@@ -334,11 +334,8 @@ function Item({ item, focused }: { item: Wish; focused: boolean }) {
   }
 
   const hasDetails = Boolean(item.note || item.link || item.added_on);
-  const nameColor = want
-    ? "text-ink"
-    : item.status === "got"
-      ? "text-ink/75"
-      : "text-ink/55 line-through decoration-ink/30";
+  // Want and got it: same colour (the columns tell them apart). Changed my mind: faded with a strike.
+  const nameColor = item.status === "dropped" ? "text-ink/55 line-through decoration-ink/30" : "text-ink";
 
   return (
     <li
