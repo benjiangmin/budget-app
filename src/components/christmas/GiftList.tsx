@@ -4,46 +4,63 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteGift, setGiftStatus } from "@/app/christmas/actions";
 import type { Gift, GiftStatus, Person } from "@/lib/christmas";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useIsStuck } from "@/components/ui/useIsStuck";
 import GiftForm from "./GiftForm";
 import { money } from "./money";
 
 const NEXT: Record<GiftStatus, GiftStatus> = { todo: "bought", bought: "arrived", arrived: "todo" };
 const LABEL: Record<GiftStatus, string> = { todo: "To buy", bought: "Bought", arrived: "Arrived" };
 
-// The year's people, each a card with their gifts and their total. Two cards across on wide screens.
+// The year's people, one under another, each a card with their gifts and their total.
 export default function GiftList({ year, people, names, focusId }: { year: number; people: Person[]; names: string[]; focusId?: string }) {
   const all = people.flatMap((p) => p.gifts).filter((g) => g.item);
   const counts = { todo: 0, bought: 0, arrived: 0 };
   for (const g of all) counts[g.status] += 1;
+  const [headRef, stuck] = useIsStuck<HTMLDivElement>();
 
   return (
-    <section aria-label={`Christmas ${year}`} className="relative mt-5 rounded-card border-[1.5px] border-ink p-3 sm:p-4">
-      {/* Mascots go here, pinned to the box (behind the cards, trimmed by the border), e.g.
-          <img src="/name.png" alt="" aria-hidden="true"
-               className="pointer-events-none absolute -bottom-4 -right-6 z-0 w-36 select-none opacity-60 sm:w-44" /> */}
-      <div className="flex flex-wrap items-baseline justify-between gap-2 px-1 pb-3 pt-1">
-        <h2 className="font-display text-xl font-semibold">
-          {people.length} {people.length === 1 ? "person" : "people"}
-        </h2>
-        {/* What the three statuses look like, with how many of each. */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {(["todo", "bought", "arrived"] as const).map((s) => (
-            <span key={s} className={`rounded-full px-2.5 py-1 font-semibold ${PILL[s]}`}>
-              {LABEL[s]} · {counts[s]}
-            </span>
-          ))}
+    // The box is two pieces stacked, so its borders always line up exactly: the title row (top edge +
+    // sides, rounded top) and the body (sides + bottom edge, rounded bottom).
+    <section aria-label={`Christmas ${year}`} className="relative mt-5">
+      {/* The title row pins just under the page's title/search bar while you scroll, keeping the box's
+          top edge with it, and shows a soft shadow under itself once pinned. The outer strip is paper
+          so nothing peeks past its rounded corners. */}
+      <div ref={headRef} data-stick-under className="sticky top-[var(--sticky-top,0px)] z-10 bg-paper">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 rounded-t-card border-x-[1.5px] border-t-[1.5px] border-ink px-4 pb-3 pt-4 sm:px-5">
+          <h2 className="font-display text-xl font-semibold">
+            {people.length} {people.length === 1 ? "person" : "people"}
+          </h2>
+          {/* What the three statuses look like, with how many of each. */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            {(["todo", "bought", "arrived"] as const).map((s) => (
+              <span key={s} className={`rounded-full px-2.5 py-1 font-semibold ${PILL[s]}`}>
+                {LABEL[s]} · {counts[s]}
+              </span>
+            ))}
+          </div>
         </div>
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-[1.5px] top-full h-6 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
+            stuck ? "opacity-100" : "opacity-0"
+          }`}
+        />
       </div>
 
-      {people.length === 0 ? (
-        <p className="rounded-card border border-dashed border-line px-5 py-8 text-center text-muted">No gifts for {year} yet. Add one above.</p>
-      ) : (
-        <div className="relative z-[1] grid items-start gap-3 md:grid-cols-2">
-          {people.map((p) => (
-            <PersonCard key={p.name} person={p} names={names} focusId={focusId} />
-          ))}
-        </div>
-      )}
+      <div className="relative rounded-b-card border-x-[1.5px] border-b-[1.5px] border-ink px-3 pb-3 sm:px-4 sm:pb-4">
+        {/* Mascots go here, pinned to the box (behind the cards, trimmed by the border), e.g.
+            <img src="/name.png" alt="" aria-hidden="true"
+                 className="pointer-events-none absolute -bottom-4 -right-6 z-0 w-36 select-none opacity-60 sm:w-44" /> */}
+        {people.length === 0 ? (
+          <p className="rounded-card border border-dashed border-line px-5 py-8 text-center text-muted">No gifts for {year} yet. Add one above.</p>
+        ) : (
+          <div className="relative z-[1] space-y-3">
+            {people.map((p) => (
+              <PersonCard key={p.name} person={p} names={names} focusId={focusId} />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

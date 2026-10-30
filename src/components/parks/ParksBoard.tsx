@@ -13,6 +13,23 @@ const VEIL_MS = 620;
 // The box's smallest height on wide screens: the column title (~3.5rem) + 8 cards (88px each with
 // 8px gaps ≈ 47.5rem) + bottom padding. Raise/lower to show more/fewer parks before scrolling.
 const MIN_8 = "lg:min-h-[42rem]"; // same slide timing as the unsuspicious documents' writing box
+
+// Which borders each piece draws. Phones: the columns stack (Visited on top). Wide screens: side by
+// side, with a thin line between them. Each column's title piece and list piece are siblings of the
+// same width, so their side borders line up exactly (no 1px jog).
+const EDGES = {
+  left: {
+    head: "rounded-t-card border-x-[1.5px] border-t-[1.5px] border-ink lg:rounded-tr-none lg:border-r-0",
+    body: "border-x-[1.5px] border-ink lg:rounded-bl-card lg:border-b-[1.5px] lg:border-r-0",
+    strip: "rounded-t-card border-x-[1.5px] border-t-[1.5px] border-ink lg:rounded-r-none lg:rounded-l-card lg:border-b-[1.5px] lg:border-r-0",
+  },
+  right: {
+    head: "border-x-[1.5px] border-t border-ink border-t-line lg:rounded-tr-card lg:border-l lg:border-t-[1.5px] lg:border-l-line lg:border-t-ink",
+    body: "rounded-b-card border-x-[1.5px] border-b-[1.5px] border-ink lg:rounded-bl-none lg:border-l lg:border-l-line",
+    strip:
+      "rounded-b-card border-x-[1.5px] border-b-[1.5px] border-t border-ink border-t-line lg:rounded-l-none lg:rounded-r-card lg:border-l lg:border-t-[1.5px] lg:border-l-line lg:border-t-ink",
+  },
+};
 type Mode = "both" | "visited" | "notYet"; // which column(s) are open
 
 // One black-bordered box, two columns: Visited (left) and Not yet (right). Folding one into a slim
@@ -50,8 +67,9 @@ export default function ParksBoard({ visited, notYet, focusId }: { visited: Park
     <section
       aria-label="National parks"
       // Height: fills the rest of the screen, but never less than ~8 cards (MIN_8). On phones each
-      // column is its own fixed height instead.
-      className={`relative mt-5 flex flex-col rounded-card border-[1.5px] border-ink lg:flex-1 lg:basis-0 lg:flex-row ${MIN_8}`}
+      // column is its own fixed height instead. The black border is drawn by the pieces inside
+      // (see EDGES), so the pinned titles keep the top edge and every line meets exactly.
+      className={`relative mt-5 flex flex-col lg:flex-1 lg:basis-0 lg:flex-row ${MIN_8}`}
     >
       {/* The mascot goes here, pinned to the box (behind the parks, trimmed by the border), e.g.
           <img src="/name.png" alt="" aria-hidden="true"
@@ -112,6 +130,7 @@ function Column({
 }) {
   const [scrolled, setScrolled] = useState(false); // the list has scrolled inside the box
   const [headRef, stuck] = useIsStuck<HTMLDivElement>(); // the title is pinned to the page
+  const edges = EDGES[side];
   const official = parks.filter((p) => !p.custom);
   const other = parks.filter((p) => p.custom);
   // Arrows point the way the column folds (left column folds left, right column folds right).
@@ -122,18 +141,14 @@ function Column({
     <div
       style={{ "--w": width } as CSSProperties}
       className={`relative z-[1] flex min-h-0 flex-col transition-[width] delay-150 duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none lg:w-[var(--w)] ${
-        side === "right" ? "border-t border-line lg:border-l lg:border-t-0" : ""
-      } ${
-        open
-          ? "h-[75dvh] min-h-[24rem] lg:h-auto lg:min-h-0"
-          : side === "left"
-            ? "rounded-t-[16.5px] bg-surface lg:rounded-r-none lg:rounded-l-[16.5px]"
-            : "rounded-b-[16.5px] bg-surface lg:rounded-l-none lg:rounded-r-[16.5px]"
+        open ? "h-[75dvh] min-h-[24rem] lg:h-auto lg:min-h-0" : ""
       }`}
     >
       {!open ? (
         // Folded: a slim strip (wide screens) or a bar (phones).
-        <div className="panel-in flex items-center justify-between gap-3 p-3 lg:h-full lg:flex-col lg:justify-start lg:gap-5 lg:px-0 lg:py-4">
+        <div
+          className={`panel-in flex items-center justify-between gap-3 bg-surface p-3 lg:h-full lg:flex-col lg:justify-start lg:gap-5 lg:px-0 lg:py-4 ${edges.strip}`}
+        >
           <button
             type="button"
             onClick={onUnfold}
@@ -152,59 +167,38 @@ function Column({
         </div>
       ) : (
         <div className="panel-in flex min-h-0 flex-1 flex-col">
-          {/* The title pins just under the page's title/search bar when the page scrolls. Once pinned it
-              draws the box's top edge (rounded corner + black line) so the box still looks closed,
-              and a soft shadow shows under it (also when the list itself has scrolled).
-              16.5px corners = the card radius minus the border, so it fits inside the box's corners. */}
-          <div
-            ref={headRef}
-            // data-stick-under: once pinned, the page bar's own fade hides so this edge stays crisp.
-            data-stick-under
-            className={`sticky top-[var(--sticky-top,0px)] z-10 flex shrink-0 items-center justify-between gap-3 bg-paper px-5 pb-2 pt-4 sm:px-6 ${
-              side === "left" ? "rounded-t-[16.5px] lg:rounded-tr-none" : "lg:rounded-tr-[16.5px]"
-            }`}
-          >
-            {/* Pinned: paper squares hide the box's straight side borders at the outer corners, then the
-                rounded edge is drawn on top. */}
-            {stuck && (
-              <>
-                <div aria-hidden="true" className={`pointer-events-none absolute -left-[1.5px] top-0 size-5 bg-paper ${side === "right" ? "lg:hidden" : ""}`} />
-                <div aria-hidden="true" className={`pointer-events-none absolute -right-[1.5px] top-0 size-5 bg-paper ${side === "left" ? "lg:hidden" : ""}`} />
-              </>
-            )}
-            {stuck && (
-              <div
-                aria-hidden="true"
-                className={`pointer-events-none absolute -inset-x-[1.5px] top-0 h-5 rounded-t-card border-x-[1.5px] border-t-[1.5px] border-ink ${
-                  side === "left" ? "lg:right-0 lg:rounded-tr-none lg:border-r-0" : "lg:left-0 lg:rounded-tl-none lg:border-l-0"
-                }`}
-              />
-            )}
+          {/* The title pins just under the page's title/search bar when the page scrolls, carrying the
+              box's top edge with it, and shows a soft shadow under itself once pinned (or when the list
+              has scrolled). The outer strip is paper so nothing peeks past its rounded corner.
+              data-stick-under: once pinned, the page bar's own fade hides so the edge stays crisp. */}
+          <div ref={headRef} data-stick-under className="sticky top-[var(--sticky-top,0px)] z-10 shrink-0 bg-paper">
             <div
               aria-hidden="true"
-              className={`pointer-events-none absolute inset-x-0 top-full h-6 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
+              className={`pointer-events-none absolute inset-x-[1.5px] top-full h-6 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
                 stuck || scrolled ? "opacity-100" : "opacity-0"
               }`}
             />
-            <h2 className="font-display text-xl font-semibold">{title}</h2>
-            <div className="flex items-center gap-1">
-              <Count official={official.length} other={other.length} />
-              <button
-                type="button"
-                onClick={onFold}
-                aria-label={`Fold away ${title.toLowerCase()}`}
-                title="Fold away"
-                className="grid size-8 place-items-center rounded-control text-muted transition-colors hover:bg-surface hover:text-ink"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d={foldPath} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+            <div className={`flex items-center justify-between gap-3 px-5 pb-2 pt-4 sm:px-6 ${edges.head}`}>
+              <h2 className="font-display text-xl font-semibold">{title}</h2>
+              <div className="flex items-center gap-1">
+                <Count official={official.length} other={other.length} />
+                <button
+                  type="button"
+                  onClick={onFold}
+                  aria-label={`Fold away ${title.toLowerCase()}`}
+                  title="Fold away"
+                  className="grid size-8 place-items-center rounded-control text-muted transition-colors hover:bg-surface hover:text-ink"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d={foldPath} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           {/* The scrolling part, pinned to the column (absolute inset-0) so a long list scrolls inside
               instead of making the box taller. */}
-          <div className="relative min-h-0 flex-1">
+          <div className={`relative min-h-0 flex-1 ${edges.body}`}>
             <div
               onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
               className={`absolute inset-0 overflow-y-auto px-3 pb-4 sm:px-4 ${

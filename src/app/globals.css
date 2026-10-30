@@ -93,7 +93,7 @@ body {
 
 @keyframes flash {
   0%, 45% { background-color: #d4a373; } /* caramel: the highlight color, held for the first 45% */
-  100%    { background-color: var(--surface); } /* fades back to the box's normal color */
+  /* No 100% step on purpose: it fades back to whatever color that entry normally has. */
 }
 .flash {
   animation: flash 4.5s ease-out both; /* total length of the search highlight */
