@@ -75,7 +75,7 @@ export default function CrashoutForm({ defaultDate }: { defaultDate?: string }) 
               initial=""
               onChange={(body) => update(d.key, (x) => ({ ...x, body }))}
               onFiles={(files) => addFiles(d.key, files)}
-              placeholder={i === 0 ? "Okay. Deep breath. What's going on?" : "Another crash out…"}
+              placeholder={i === 0 ? "Wagwan?" : "Another crash out…"}
               label={`Crash out ${i + 1}`}
             />
             <Pictures
