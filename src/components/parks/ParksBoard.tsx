@@ -6,13 +6,19 @@ import { deletePark, removeParkPhoto, setVisited, uploadParkPhoto } from "@/app/
 import { shrinkImage } from "@/lib/shrink-image";
 import type { Park } from "@/lib/parks";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useIsStuck } from "@/components/ui/useIsStuck";
 import ParkForm from "./ParkForm";
 
-const VEIL_MS = 620; // same slide timing as the unsuspicious documents' writing box
+const VEIL_MS = 620;
+// The box's smallest height on wide screens: the column title (~3.5rem) + 8 cards (88px each with
+// 8px gaps ≈ 47.5rem) + bottom padding. Raise/lower to show more/fewer parks before scrolling.
+const MIN_8 = "lg:min-h-[52rem]"; // same slide timing as the unsuspicious documents' writing box
 type Mode = "both" | "visited" | "notYet"; // which column(s) are open
 
 // One black-bordered box, two columns: Visited (left) and Not yet (right). Folding one into a slim
-// strip widens the other; the strip's button brings both back. Each column scrolls inside itself.
+// strip widens the other; the strip's button brings both back. Each column scrolls inside itself,
+// and the box is always tall enough to show at least 8 parks (more on tall screens).
+// Official national parks first, then your own ("Other").
 export default function ParksBoard({ visited, notYet, focusId }: { visited: Park[]; notYet: Park[]; focusId?: string }) {
   const [mode, setMode] = useState<Mode>("both");
 
@@ -43,7 +49,9 @@ export default function ParksBoard({ visited, notYet, focusId }: { visited: Park
   return (
     <section
       aria-label="National parks"
-      className="relative mt-5 flex flex-col overflow-hidden rounded-card border-[1.5px] border-ink lg:min-h-[26rem] lg:flex-1 lg:basis-0 lg:flex-row"
+      // Height: fills the rest of the screen, but never less than ~8 cards (MIN_8). On phones each
+      // column is its own fixed height instead.
+      className={`relative mt-5 flex flex-col rounded-card border-[1.5px] border-ink lg:flex-1 lg:basis-0 lg:flex-row ${MIN_8}`}
     >
       {/* The mascot goes here, pinned to the box (behind the parks, trimmed by the border), e.g.
           <img src="/name.png" alt="" aria-hidden="true"
@@ -73,7 +81,7 @@ export default function ParksBoard({ visited, notYet, focusId }: { visited: Park
       {/* The veil (wide screens): covers the box while the columns slide. */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 z-20 hidden bg-surface transition-opacity ease-out motion-reduce:hidden lg:block ${
+        className={`pointer-events-none absolute inset-0 z-20 hidden rounded-[16.5px] bg-surface transition-opacity ease-out motion-reduce:hidden lg:block ${
           veil > 0 ? "opacity-100 duration-150" : "opacity-0 duration-300"
         }`}
       />
@@ -102,7 +110,10 @@ function Column({
   onFold: () => void;
   onUnfold: () => void;
 }) {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(false); // the list has scrolled inside the box
+  const [headRef, stuck] = useIsStuck<HTMLDivElement>(); // the title is pinned to the page
+  const official = parks.filter((p) => !p.custom);
+  const other = parks.filter((p) => p.custom);
   // Arrows point the way the column folds (left column folds left, right column folds right).
   const foldPath = side === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7";
   const unfoldPath = side === "left" ? "M9 5l7 7-7 7" : "M15 5l-7 7 7 7";
@@ -112,7 +123,13 @@ function Column({
       style={{ "--w": width } as CSSProperties}
       className={`relative z-[1] flex min-h-0 flex-col transition-[width] delay-150 duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none lg:w-[var(--w)] ${
         side === "right" ? "border-t border-line lg:border-l lg:border-t-0" : ""
-      } ${open ? "h-[60dvh] min-h-[18rem] lg:h-auto lg:min-h-0" : "bg-surface"}`}
+      } ${
+        open
+          ? "h-[75dvh] min-h-[24rem] lg:h-auto lg:min-h-0"
+          : side === "left"
+            ? "rounded-t-[16.5px] bg-surface lg:rounded-r-none lg:rounded-l-[16.5px]"
+            : "rounded-b-[16.5px] bg-surface lg:rounded-l-none lg:rounded-r-[16.5px]"
+      }`}
     >
       {!open ? (
         // Folded: a slim strip (wide screens) or a bar (phones).
@@ -120,7 +137,7 @@ function Column({
           <button
             type="button"
             onClick={onUnfold}
-            aria-label={`Show ${title.toLowerCase()} (${parks.length})`}
+            aria-label={`Show ${title.toLowerCase()} (${official.length})`}
             title={`Show ${title.toLowerCase()}`}
             className="flex items-center gap-2 rounded-control bg-accent px-4 py-2.5 font-semibold text-accent-ink transition-opacity hover:opacity-90 lg:size-11 lg:justify-center lg:p-0"
           >
@@ -130,15 +147,48 @@ function Column({
             <span className="lg:sr-only">Show {title.toLowerCase()}</span>
           </button>
           <p className="whitespace-nowrap text-sm text-muted lg:rotate-180 lg:[writing-mode:vertical-rl]">
-            {title} · {parks.length}
+            {title} · {official.length}
           </p>
         </div>
       ) : (
         <div className="panel-in flex min-h-0 flex-1 flex-col">
-          <div className="relative z-10 flex shrink-0 items-center justify-between gap-3 bg-paper px-5 pb-2 pt-4 sm:px-6">
+          {/* The title pins just under the page's title/search bar when the page scrolls. Once pinned it
+              draws the box's top edge (rounded corner + black line) so the box still looks closed,
+              and a soft shadow shows under it (also when the list itself has scrolled).
+              16.5px corners = the card radius minus the border, so it fits inside the box's corners. */}
+          <div
+            ref={headRef}
+            // data-stick-under: once pinned, the page bar's own fade hides so this edge stays crisp.
+            data-stick-under
+            className={`sticky top-[var(--sticky-top,0px)] z-10 flex shrink-0 items-center justify-between gap-3 bg-paper px-5 pb-2 pt-4 sm:px-6 ${
+              side === "left" ? "rounded-t-[16.5px] lg:rounded-tr-none" : "lg:rounded-tr-[16.5px]"
+            }`}
+          >
+            {/* Pinned: paper squares hide the box's straight side borders at the outer corners, then the
+                rounded edge is drawn on top. */}
+            {stuck && (
+              <>
+                <div aria-hidden="true" className={`pointer-events-none absolute -left-[1.5px] top-0 size-5 bg-paper ${side === "right" ? "lg:hidden" : ""}`} />
+                <div aria-hidden="true" className={`pointer-events-none absolute -right-[1.5px] top-0 size-5 bg-paper ${side === "left" ? "lg:hidden" : ""}`} />
+              </>
+            )}
+            {stuck && (
+              <div
+                aria-hidden="true"
+                className={`pointer-events-none absolute -inset-x-[1.5px] top-0 h-5 rounded-t-card border-x-[1.5px] border-t-[1.5px] border-ink ${
+                  side === "left" ? "lg:right-0 lg:rounded-tr-none lg:border-r-0" : "lg:left-0 lg:rounded-tl-none lg:border-l-0"
+                }`}
+              />
+            )}
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-x-0 top-full h-6 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
+                stuck || scrolled ? "opacity-100" : "opacity-0"
+              }`}
+            />
             <h2 className="font-display text-xl font-semibold">{title}</h2>
             <div className="flex items-center gap-1">
-              <p className="text-sm text-muted">{parks.length}</p>
+              <Count official={official.length} other={other.length} />
               <button
                 type="button"
                 onClick={onFold}
@@ -152,28 +202,53 @@ function Column({
               </button>
             </div>
           </div>
+          {/* The scrolling part, pinned to the column (absolute inset-0) so a long list scrolls inside
+              instead of making the box taller. */}
           <div className="relative min-h-0 flex-1">
             <div
-              aria-hidden="true"
-              className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-5 bg-gradient-to-b from-paper to-transparent transition-opacity duration-200 ${
-                scrolled ? "opacity-100" : "opacity-0"
+              onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
+              className={`absolute inset-0 overflow-y-auto px-3 pb-4 sm:px-4 ${
+                side === "left" ? "lg:rounded-bl-[16.5px]" : "rounded-b-[16.5px] lg:rounded-bl-none"
               }`}
-            />
-            <div onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)} className="absolute inset-0 overflow-y-auto px-3 pb-4 sm:px-4">
-              {parks.length === 0 ? (
+            >
+              {official.length === 0 ? (
                 <p className="mt-1 rounded-card border border-dashed border-line px-5 py-6 text-muted">{empty}</p>
               ) : (
                 <ul className="space-y-2">
-                  {parks.map((p) => (
+                  {official.map((p) => (
                     <ParkItem key={p.id} park={p} focused={p.id === focusId} />
                   ))}
                 </ul>
+              )}
+              {/* Your own parks (not official national parks): their own little section. */}
+              {other.length > 0 && (
+                <>
+                  <h3 className="mt-5 flex items-baseline justify-between px-1 pb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                    <span>Other</span>
+                    <span className="font-normal normal-case tracking-normal">{other.length}</span>
+                  </h3>
+                  <ul className="space-y-2">
+                    {other.map((p) => (
+                      <ParkItem key={p.id} park={p} focused={p.id === focusId} />
+                    ))}
+                  </ul>
+                </>
               )}
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// "19" for official parks, then "+4 other" (your own parks) set apart, so they never mix.
+function Count({ official, other }: { official: number; other: number }) {
+  return (
+    <p className="text-sm text-muted">
+      <span className="num font-semibold text-ink/80">{official}</span>
+      {other > 0 && <span className="ml-1.5 rounded-full bg-surface px-2 py-0.5 text-xs">+{other} other</span>}
+    </p>
   );
 }
 
@@ -217,9 +292,6 @@ function ParkItem({ park, focused }: { park: Park; focused: boolean }) {
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 text-[17px] font-medium text-ink">
           <span className="min-w-0 truncate">{park.name}</span>
-          {park.custom && (
-            <span className="shrink-0 rounded-full bg-paper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">Other</span>
-          )}
         </p>
         {park.note && <p className="mt-0.5 break-words text-sm leading-snug text-muted">{park.note}</p>}
       </div>

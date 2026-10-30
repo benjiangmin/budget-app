@@ -27,14 +27,21 @@ export default function ParksPage(props: PageProps<"/parks">) {
 async function Parks({ focus }: { focus?: string }) {
   await connection(); // always fresh
   const { visited, notYet } = await getParks();
+  const officialVisited = visited.filter((p) => !p.custom).length;
+  const officialTotal = officialVisited + notYet.filter((p) => !p.custom).length;
+  const otherVisited = visited.filter((p) => p.custom).length;
 
   return (
     <>
       <StickyTop className="sticky top-0 z-30 -mx-4 -mt-3 shrink-0 bg-paper px-4 pb-2 pt-3">
         <header className="flex items-baseline justify-between gap-4 rounded-card bg-accent px-5 py-4 text-accent-ink shadow-lg shadow-ink/15">
           <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">National parks</h1>
-          <p className="text-sm opacity-70">
-            {visited.length} of {visited.length + notYet.length} visited
+          {/* Counts official national parks only; your own parks ("other") are shown apart. */}
+          <p className="text-sm">
+            <span className="opacity-90">
+              {officialVisited} of {officialTotal} visited
+            </span>
+            {otherVisited > 0 && <span className="ml-2 rounded-full bg-accent-ink/15 px-2 py-0.5 text-xs opacity-80">+{otherVisited} other</span>}
           </p>
         </header>
         <ParkSearch />
