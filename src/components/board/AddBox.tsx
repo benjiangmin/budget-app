@@ -19,7 +19,7 @@ export default function AddBox({
   message,
   narrowSide = false,
 }: {
-  side: ReactNode;
+  side?: ReactNode; // leave out for no left column (Regrets)
   rows: ReactNode;
   label: string; // what the + button says to screen readers, e.g. "Add game"
   pending: boolean;
@@ -29,6 +29,7 @@ export default function AddBox({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
       {/* Left: stacked, with a thin line between it and the inputs. Width: sm:w-[13rem]. */}
+      {side && (
       <div
         className={`order-2 flex shrink-0 flex-col justify-center gap-2 sm:order-none sm:border-r sm:border-accent/20 sm:pr-3 ${
           narrowSide ? "" : "sm:w-[13rem]"
@@ -36,6 +37,7 @@ export default function AddBox({
       >
         {side}
       </div>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         {rows}

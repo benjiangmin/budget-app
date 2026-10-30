@@ -31,7 +31,7 @@ export default function TearForm({ tear, onDone }: { tear?: Tear; onDone?: () =>
       required
       maxLength={500}
       defaultValue={tear?.body}
-      placeholder="What made you cry?"
+      placeholder="Why u cry bud"
       aria-label="What happened"
       autoFocus={editing}
       style={{ outline: "none" }}
