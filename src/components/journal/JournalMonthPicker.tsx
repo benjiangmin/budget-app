@@ -7,13 +7,24 @@ import { MONTH_NAMES, monthOrder } from "@/lib/journal-years";
 
 // ‹ October › in the title bar. Runs through the document's 12 months in order
 // (Jan → Dec, or Sep → Aug for a school year) and stops at the ends.
-export default function JournalMonthPicker({ year, start, month }: { year: number; start: number; month: number }) {
+// base: which kind of year page it's on ("/journal" or "/bible").
+export default function JournalMonthPicker({
+  year,
+  start,
+  month,
+  base = "/journal",
+}: {
+  year: number;
+  start: number;
+  month: number;
+  base?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const order = monthOrder(start);
   const at = order.indexOf(month);
-  const href = (m: number) => `/journal/${year}?m=${m}`;
+  const href = (m: number) => `${base}/${year}?m=${m}`;
 
   useEffect(() => {
     if (!open) return;

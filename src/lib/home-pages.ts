@@ -33,5 +33,14 @@ export const TRIP_LABEL = "Recreational record";
 export const tripHref = (id: string) => `/trips/${id}`;
 export const tripId = (href: string | null) => href?.match(/^\/trips\/([0-9a-f-]{36})$/i)?.[1] ?? null;
 
+// Bible in a year: one page design shared by every year, e.g. /bible/2024.
+// In the "Opens" dropdown this shows as "Bible in a year…", which asks for the year.
+export const BIBLE_LABEL = "Bible in a year";
+export const bibleHref = (year: number) => `/bible/${year}`;
+export const bibleYear = (href: string | null) => {
+  const m = href?.match(/^\/bible\/(\d{4})$/);
+  return m ? Number(m[1]) : null;
+};
+
 export const isKnownPage = (href: string) =>
-  PAGES.some((p) => p.href === href) || journalYear(href) !== null || tripId(href) !== null;
+  PAGES.some((p) => p.href === href) || journalYear(href) !== null || tripId(href) !== null || bibleYear(href) !== null;
