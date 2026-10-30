@@ -86,10 +86,8 @@ export default function AnimeForm({ anime, onDone, compact }: { anime?: Anime; o
           side={<MovieToggle key={state.savedAt ?? 0} />}
           rows={
             <>
-              <div className="flex gap-2">
-                {title}
-                {picker}
-              </div>
+              {/* No status picker when adding: New anime start in Watching (drag it on the board to change). */}
+              <div className="flex">{title}</div>
               {note}
             </>
           }

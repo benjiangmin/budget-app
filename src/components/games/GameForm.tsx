@@ -92,10 +92,8 @@ export default function GameForm({ game, onDone, compact }: { game?: Game; onDon
           }
           rows={
             <>
-              <div className="flex gap-2">
-                {title}
-                {picker}
-              </div>
+              {/* No status picker when adding: New games start in In progress (drag it on the board to change). */}
+              <div className="flex">{title}</div>
               {note}
             </>
           }

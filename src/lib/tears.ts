@@ -5,11 +5,9 @@ export type Tear = { id: string; body: string; cried_on: string | null; position
 
 const COLUMNS = "id, body, cried_on, position";
 
-// Newest first: dated ones by date, then the undated ones by when they were added.
+// Newest added first. The date doesn't affect the order (so adding a date to an old entry keeps
+// it where it is).
 export function tearSort(a: Tear, b: Tear) {
-  if (a.cried_on && b.cried_on && a.cried_on !== b.cried_on) return b.cried_on.localeCompare(a.cried_on);
-  if (a.cried_on && !b.cried_on) return -1;
-  if (!a.cried_on && b.cried_on) return 1;
   return b.position - a.position;
 }
 

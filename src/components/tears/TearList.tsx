@@ -91,11 +91,13 @@ function Item({ item, focused }: { item: Tear; focused: boolean }) {
     // date | what happened | edit/delete (show on hover). bg-surface/80 lets a mascot show faintly behind.
     <li
       ref={ref}
-      className={`group grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-start gap-x-3 rounded-card bg-surface/80 px-3 py-2.5 transition-opacity sm:px-4 ${
+      className={`group grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-start gap-x-4 rounded-card bg-surface/80 px-3 py-2.5 transition-opacity sm:px-4 ${
         pending ? "opacity-40" : ""
       } ${focused ? "flash" : ""}`}
     >
-      <div className="pt-0.5 text-sm">
+      {/* The date column (w 4.5rem): centered in its column and on the first line of text
+          (h-[1.625rem] = one line of the entry). Room before the text: gap-x-4. */}
+      <div className="flex h-[1.625rem] items-center justify-center text-sm">
         {item.cried_on ? (
           <span className="num text-muted">{shortDate(item.cried_on)}</span>
         ) : (

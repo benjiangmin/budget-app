@@ -100,10 +100,8 @@ export default function GoalForm({ goal, onDone, compact }: { goal?: Goal; onDon
           }
           rows={
             <>
-              <div className="flex gap-2">
-                {title}
-                {picker}
-              </div>
+              {/* No status picker when adding: New goals start in Yet to start (drag it on the board to change). */}
+              <div className="flex">{title}</div>
               {/* No proof box here: proof comes later, by editing the goal once it's done. */}
               {why}
             </>
