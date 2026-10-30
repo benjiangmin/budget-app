@@ -12,7 +12,7 @@ import ParkForm from "./ParkForm";
 const VEIL_MS = 620;
 // The box's smallest height on wide screens: the column title (~3.5rem) + 8 cards (88px each with
 // 8px gaps ≈ 47.5rem) + bottom padding. Raise/lower to show more/fewer parks before scrolling.
-const MIN_8 = "lg:min-h-[52rem]"; // same slide timing as the unsuspicious documents' writing box
+const MIN_8 = "lg:min-h-[42rem]"; // same slide timing as the unsuspicious documents' writing box
 type Mode = "both" | "visited" | "notYet"; // which column(s) are open
 
 // One black-bordered box, two columns: Visited (left) and Not yet (right). Folding one into a slim
