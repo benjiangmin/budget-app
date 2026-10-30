@@ -62,10 +62,24 @@ export default function CrashoutList({ days, year, focusId }: { days: CrashoutDa
       aria-label={`Crash outs in ${year}`}
       className="relative flex h-[75dvh] min-h-[24rem] flex-col overflow-hidden rounded-card border-[1.5px] border-ink lg:h-auto lg:min-h-[32rem]"
     >
-      {/* Mascots go here, pinned to the box (behind everything, trimmed by the border). Copy from
-          the dreams list, e.g.
-          <img src="/name.png" alt="" aria-hidden="true"
-               className="pointer-events-none absolute -bottom-6 -right-10 w-44 select-none opacity-60 rotate-6 sm:w-52" /> */}
+      {/* Mascots: pinned to the box's bottom corners (they don't move when the list scrolls), behind
+          everything, and trimmed by the border. Morpeko bottom-left, Annihilape bottom-right.
+          Tweak per image: w-.. = size, bottom/left/right = position (negative pushes it past the
+          edge), opacity-.. = fade, rotate-.. = tilt. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/morpeko.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-4 -left-6 w-28 select-none opacity-60 -rotate-6 sm:w-32"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/annihilape.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-6 -right-8 w-44 select-none opacity-60 rotate-6 sm:w-52"
+      />
 
       {/* On wide screens the scroller is pinned to the box's edges (absolute inset-0), so a long list
           scrolls inside the box instead of making the box taller. */}

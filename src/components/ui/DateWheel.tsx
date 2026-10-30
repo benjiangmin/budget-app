@@ -11,14 +11,19 @@ const daysIn = (y: number, m: number) => new Date(y, m, 0).getDate(); // m is 1â
 // Phone-style date picker: click the field to open it, then scroll or tap each wheel.
 // Submits as a hidden "YYYY-MM-DD" input so the form/server action don't change.
 // Optional onChange: called with the new date when the picker closes (not on every wheel tick).
+// noYear: the box shows "Oct 29" (the year is still in the wheels). display: show this instead (e.g. "?").
 export default function DateWheel({
   name,
   defaultValue,
   onChange,
+  noYear = false,
+  display,
 }: {
   name: string;
   defaultValue: string;
   onChange?: (value: string) => void;
+  noYear?: boolean;
+  display?: string;
 }) {
   const [y0, m0, d0] = defaultValue.split("-").map(Number);
   const [year, setYear] = useState(y0);
@@ -45,14 +50,14 @@ export default function DateWheel({
   const label = new Date(year, month - 1, safeDay).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    ...(noYear ? {} : { year: "numeric" }),
   });
 
   return (
     <div ref={ref} className="relative">
       <input type="hidden" name={name} value={value} />
       <PickerButton open={open} onClick={() => setOpen((o) => !o)}>
-        {label}
+        {display ?? label}
       </PickerButton>
 
       {open && (

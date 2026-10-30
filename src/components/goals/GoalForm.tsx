@@ -67,7 +67,7 @@ export default function GoalForm({ goal, onDone, compact }: { goal?: Goal; onDon
       placeholder="Why (optional)"
       aria-label="Why"
       style={{ outline: "none" }}
-      className={`${field} min-w-0 flex-1`}
+      className={`${field} min-w-0`}
     />
   );
   const proof = (
@@ -78,11 +78,11 @@ export default function GoalForm({ goal, onDone, compact }: { goal?: Goal; onDon
       placeholder="Proof link (optional)"
       aria-label="Proof"
       style={{ outline: "none" }}
-      className={`${field} min-w-0 ${compact ? "" : "sm:w-[35%] sm:shrink-0"}`}
+      className={`${field} min-w-0`}
     />
   );
 
-  // The add box at the top of the page: dates on the left | goal + status, why + proof | + button.
+  // The add box at the top of the page: dates on the left | goal + status, why | + button.
   if (!compact) {
     return (
       <form ref={formRef} action={action}>
@@ -104,10 +104,8 @@ export default function GoalForm({ goal, onDone, compact }: { goal?: Goal; onDon
                 {title}
                 {picker}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                {why}
-                {proof}
-              </div>
+              {/* No proof box here: proof comes later, by editing the goal once it's done. */}
+              {why}
             </>
           }
         />

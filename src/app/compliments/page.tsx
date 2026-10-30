@@ -40,8 +40,8 @@ async function Compliments({ focus }: { focus?: string }) {
       </StickyTop>
 
       {/* The add box: a deeper oat with a thin coffee outline + soft shadow, so it stands out.
-          z-20 keeps its date picker above the list. */}
-      <div className="relative z-20 mt-1 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
+          z-[25] keeps its date picker above the list (whose pinned year bar is z-20). */}
+      <div className="relative z-[25] mt-1 rounded-card bg-line/70 p-3 shadow-md shadow-ink/10 ring-1 ring-accent/25 sm:p-4">
         <ComplimentForm />
       </div>
 
