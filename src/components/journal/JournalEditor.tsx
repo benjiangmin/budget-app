@@ -35,11 +35,13 @@ export default function JournalEditor({
   onChange,
   onStatus,
   autoFocus,
+  placeholder = "Dear diary…",
 }: {
   initial: string; // HTML
   onChange: (html: string) => void;
   onStatus: (text: string | null) => void; // e.g. "Uploading picture…"
   autoFocus?: boolean;
+  placeholder?: string;
 }) {
   // Always call the latest callbacks (the editor is only set up once).
   const latest = useRef({ onChange, onStatus });
@@ -62,7 +64,7 @@ export default function JournalEditor({
         strike: false,
       }),
       Picture.configure({ allowBase64: false }),
-      Placeholder.configure({ placeholder: "Dear diary…" }),
+      Placeholder.configure({ placeholder }),
     ],
     content: initial,
     autofocus: autoFocus ? "end" : false,

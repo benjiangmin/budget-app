@@ -9,7 +9,7 @@ export const JOURNAL_BUCKET = "journal-images";
 export type JournalEntry = { id: string; date: string; body: string }; // body = safe HTML, pictures linked
 
 // Clean the saved HTML and give each picture a temporary link (6 hours).
-async function withPictureLinks(bodies: string[]): Promise<string[]> {
+export async function withPictureLinks(bodies: string[]): Promise<string[]> {
   const cleaned = bodies.map(cleanJournalHtml);
   const paths = [...new Set(cleaned.flatMap(picturePaths))];
   const urls = new Map<string, string>();

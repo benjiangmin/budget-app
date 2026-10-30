@@ -16,9 +16,24 @@ export default function RegretList({ items, focusId }: { items: Regret[]; focusI
       aria-label="Regrets"
       className="relative mb-6 mt-5 flex h-[70dvh] min-h-[20rem] flex-col overflow-hidden rounded-card border-[1.5px] border-ink md:h-auto md:flex-1 md:basis-0"
     >
-      {/* Mascots go here, pinned to the box (behind the cards, trimmed by the border), e.g.
-          <img src="/name.png" alt="" aria-hidden="true"
-               className="pointer-events-none absolute -bottom-4 -left-6 z-0 w-32 select-none opacity-60 -rotate-6 sm:w-40" /> */}
+      {/* Mascots: pinned to the box's bottom corners (they don't move when the list scrolls), behind
+          the cards, and trimmed by the border. Yamask bottom-left, Galarian Yamask bottom-right.
+          Tweak per image: w-.. = size, bottom/left/right = position (negative pushes it past the
+          edge), opacity-.. = fade, rotate-.. = tilt. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/yamask.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-4 -left-6 z-0 w-32 select-none opacity-60 -rotate-6 sm:w-40"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+      <img
+        src="/yamask-g.png"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-4 -right-6 z-0 w-32 select-none opacity-60 rotate-6 sm:w-40"
+      />
 
       {/* Fade at the top once the list has scrolled. Height: h-5. */}
       <div

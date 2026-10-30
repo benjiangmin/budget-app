@@ -39,13 +39,22 @@ export default function DateWheel({
 
   const value = `${year}-${pad(month)}-${pad(safeDay)}`;
   // Tell the parent about the new date once the picker closes.
+  // With a placeholder showing (display), opening and closing the picker counts as choosing that date.
   const emitted = useRef(value);
+  const wasOpen = useRef(false);
+  const placeholder = display !== undefined;
   useEffect(() => {
-    if (!open && value !== emitted.current) {
+    if (open) {
+      wasOpen.current = true;
+      return;
+    }
+    const justClosed = wasOpen.current;
+    wasOpen.current = false;
+    if (value !== emitted.current || (justClosed && placeholder)) {
       emitted.current = value;
       onChange?.(value);
     }
-  }, [open, value, onChange]);
+  }, [open, value, onChange, placeholder]);
 
   const label = new Date(year, month - 1, safeDay).toLocaleDateString("en-US", {
     month: "short",

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { addItem, deleteItem, moveItem, reorderItems, updateItem } from "@/app/home-actions";
 import { createJournalDoc } from "@/app/journal/actions";
+import { createTrip } from "@/app/trips/actions";
 import type { HomeItem } from "@/lib/home";
-import { JOURNAL_LABEL, PAGES, journalHref, journalYear } from "@/lib/home-pages";
+import { JOURNAL_LABEL, PAGES, TRIP_LABEL, journalHref, journalYear, tripHref, tripId } from "@/lib/home-pages";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import SelectPicker from "@/components/ui/SelectPicker";
 import SortableGrid from "./SortableGrid";
@@ -135,13 +136,16 @@ const selectClass =
   "w-full rounded-control border border-line bg-paper px-2 py-1.5 text-sm text-ink hover:border-muted";
 
 // The "Opens" dropdown. Picking "Unsuspicious document…" asks which year, then links to that year's page.
+// Picking "Recreational record…" makes a new, empty trip page and links to it.
 const ASK_YEAR = "__journal";
+const NEW_TRIP = "__trip";
 
 function OpensPicker({ href, onChange }: { href: string | null; onChange: (href: string | null) => void }) {
   const [askingYear, setAskingYear] = useState(false);
   const [kind, setKind] = useState<1 | 9>(9); // 1 = calendar year, 9 = school year (Sep–Aug)
   const [saving, setSaving] = useState(false);
   const year = journalYear(href);
+  const trip = tripId(href);
 
   return (
     <div className="flex flex-col gap-1">
@@ -155,9 +159,18 @@ function OpensPicker({ href, onChange }: { href: string | null; onChange: (href:
             ...PAGES.map((p) => ({ value: p.href as string, label: p.label })),
             ...(year !== null ? [{ value: href!, label: `${JOURNAL_LABEL} · ${year}` }] : []),
             { value: ASK_YEAR, label: `${JOURNAL_LABEL}…` },
+            ...(trip !== null ? [{ value: href!, label: TRIP_LABEL }] : []),
+            { value: NEW_TRIP, label: saving ? "Making…" : `${TRIP_LABEL}… (new)` },
           ]}
-          onChange={(v) => {
+          onChange={async (v) => {
             if (v === ASK_YEAR) return setAskingYear(true);
+            if (v === NEW_TRIP) {
+              setAskingYear(false);
+              setSaving(true);
+              const id = await createTrip();
+              setSaving(false);
+              return onChange(tripHref(id));
+            }
             setAskingYear(false);
             onChange(v || null);
           }}

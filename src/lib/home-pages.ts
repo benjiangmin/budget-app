@@ -22,4 +22,11 @@ export const journalYear = (href: string | null) => {
   return m ? Number(m[1]) : null;
 };
 
-export const isKnownPage = (href: string) => PAGES.some((p) => p.href === href) || journalYear(href) !== null;
+// Trip pages (Recreational records): one page design shared by every trip, e.g. /trips/<id>.
+// In the "Opens" dropdown this shows as "Recreational record…", which makes a new trip.
+export const TRIP_LABEL = "Recreational record";
+export const tripHref = (id: string) => `/trips/${id}`;
+export const tripId = (href: string | null) => href?.match(/^\/trips\/([0-9a-f-]{36})$/i)?.[1] ?? null;
+
+export const isKnownPage = (href: string) =>
+  PAGES.some((p) => p.href === href) || journalYear(href) !== null || tripId(href) !== null;
