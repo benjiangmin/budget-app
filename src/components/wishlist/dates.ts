@@ -1,7 +1,7 @@
-// { day: "Dec 5", year: "2024" } for the date column.
+// "Dec 5, 2024" for an item's details.
 export function dayLabel(date: string) {
   const [y, m, d] = date.split("-").map(Number);
-  return { day: new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" }), year: String(y) };
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 // Today as "YYYY-MM-DD" (the add box's default date).

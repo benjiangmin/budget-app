@@ -46,7 +46,7 @@ export default function WishForm({ item, onDone }: { item?: Wish; onDone?: () =>
       required
       maxLength={200}
       defaultValue={item?.name}
-      placeholder="What do you want?"
+      placeholder="if you want it, come and get it"
       aria-label="Item"
       autoFocus={editing}
       style={{ outline: "none" }}
@@ -86,7 +86,7 @@ export default function WishForm({ item, onDone }: { item?: Wish; onDone?: () =>
       rows={2}
       maxLength={2000}
       defaultValue={item?.note ?? ""}
-      placeholder="Details (optional): why, which one, colour…"
+      placeholder="Details (optional)"
       aria-label="Details (optional)"
       style={{ outline: "none" }}
       className={`${field} min-w-0 resize-y`}
