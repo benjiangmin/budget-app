@@ -27,7 +27,7 @@ export async function withPictureLinks(bodies: string[]): Promise<string[]> {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// Every entry in one month, newest first.
+// Every entry in one month, oldest first (the list opens at the newest, at the bottom).
 export async function getMonthEntries(year: number, month: number): Promise<JournalEntry[]> {
   const start = `${year}-${pad(month)}-01`;
   const end = month === 12 ? `${year + 1}-01-01` : `${year}-${pad(month + 1)}-01`;
@@ -36,7 +36,7 @@ export async function getMonthEntries(year: number, month: number): Promise<Jour
     .select("id, entry_date, body")
     .gte("entry_date", start)
     .lt("entry_date", end)
-    .order("entry_date", { ascending: false });
+    .order("entry_date");
   if (error) throw new Error(`Couldn't load entries: ${error.message}`);
   const bodies = await withPictureLinks(data.map((d) => d.body));
   return data.map((d, i) => ({ id: d.id, date: d.entry_date, body: bodies[i] }));

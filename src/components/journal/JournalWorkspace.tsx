@@ -349,11 +349,42 @@ function EntryList({
     const t = setTimeout(() => setSearchVeil("none"), searchVeil === "landed" ? 350 : 2500);
     return () => clearTimeout(t);
   }, [searchVeil]);
-  // Newest is at the top, so "end of month" = top and "start of month" = bottom.
+  // Oldest is at the top, newest at the bottom: "start of month" = top, "end of month" = bottom.
   const jump = (to: "top" | "bottom") => {
     const el = scrollerRef.current;
     if (el) el.scrollTo({ top: to === "top" ? 0 : el.scrollHeight, behavior: "smooth" });
   };
+
+  // Opening a month: start at the beginning of the newest entry (the last one), so you read down.
+  // If it's short, that just means the bottom of the list. Done before the screen is drawn, so
+  // there's no visible jump. Pictures that load late can push things down, so it re-lines up as
+  // the list changes size until you scroll or click yourself. Skipped when a search picked an entry.
+  const monthKey = `${calendarYear}-${monthName}`;
+  const listRef = useRef<HTMLUListElement>(null);
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    const list = listRef.current;
+    if (!scroller || !list || focusId) return;
+    let touched = false;
+    const anchor = () => {
+      const last = list.lastElementChild as HTMLElement | null;
+      if (!touched && last) scroller.scrollTop = last.offsetTop - 12; // clamps to the bottom by itself
+    };
+    anchor();
+    const stop = () => (touched = true);
+    const events = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
+    events.forEach((ev) => scroller.addEventListener(ev, stop, { passive: true }));
+    const watch = new ResizeObserver(anchor);
+    watch.observe(list);
+    const done = setTimeout(() => watch.disconnect(), 4000); // pictures have loaded by then
+    return () => {
+      clearTimeout(done);
+      watch.disconnect();
+      events.forEach((ev) => scroller.removeEventListener(ev, stop));
+    };
+    // Only when the month changes (not after saving or deleting an entry).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthKey]);
 
   return (
     <section
@@ -370,8 +401,8 @@ function EntryList({
             <p className="mr-1 text-sm text-muted">
               {entries.length} {entries.length === 1 ? "entry" : "entries"}
             </p>
-            <JumpButton label="Jump to the end of the month (newest)" onClick={() => jump("top")} dir="up" />
-            <JumpButton label="Jump to the start of the month (oldest)" onClick={() => jump("bottom")} dir="down" />
+            <JumpButton label="Jump to the start of the month (oldest)" onClick={() => jump("top")} dir="up" />
+            <JumpButton label="Jump to the end of the month (newest)" onClick={() => jump("bottom")} dir="down" />
           </div>
         )}
         {/* Fade under the title once the list has scrolled. Height: h-6. */}
@@ -397,7 +428,7 @@ function EntryList({
             No entries in {monthName} yet.
           </p>
         ) : (
-          <ul className="space-y-2.5">
+          <ul ref={listRef} className="space-y-2.5">
             {entries.map((e) => (
               <Entry
                 key={e.id}
