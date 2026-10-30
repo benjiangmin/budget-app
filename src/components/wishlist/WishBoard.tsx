@@ -519,9 +519,13 @@ function Item({ item, focused }: { item: Wish; focused: boolean }) {
       </div>
 
       {open && (
-        <div className="mt-1 space-y-1.5 pb-1 pl-9 pr-2 text-sm">
+        <div className="mt-1 space-y-2 pb-1 pl-9 pr-2 text-sm">
           {item.added_on && (
-            <p className="num text-xs uppercase tracking-wide text-muted/80">
+            <p
+              className={`num text-xs uppercase tracking-wide text-muted/80 ${
+                item.note || item.link ? "border-b border-accent/20 pb-1.5" : "" // the line between the date and the notes
+              }`}
+            >
               Added {dayLabel(item.added_on)}
             </p>
           )}
