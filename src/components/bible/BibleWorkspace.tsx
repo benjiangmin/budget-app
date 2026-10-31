@@ -8,6 +8,7 @@ import DateWheel from "@/components/ui/DateWheel";
 import RichText from "@/components/dreams/RichText";
 import { useToday } from "@/components/journal/useToday";
 import { VEIL_EVENT } from "@/components/journal/veil";
+import { planFor } from "@/lib/bible-plan";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const AUTOSAVE_MS = 1200; // today's entry saves this long after you stop typing
@@ -25,8 +26,12 @@ function parts(date: string) {
 }
 
 const EMPTY: BibleDraft = { ot: "", otNotes: "", nt: "", ntNotes: "" };
-const draftOf = (e: BibleEntry | null): BibleDraft =>
-  e ? { ot: e.ot, otNotes: e.otNotes, nt: e.nt, ntNotes: e.ntNotes } : EMPTY;
+// A saved day as it is; an empty day starts with that date's reading-plan passages filled in.
+const draftOf = (e: BibleEntry | null, date: string): BibleDraft => {
+  if (e) return { ot: e.ot, otNotes: e.otNotes, nt: e.nt, ntNotes: e.ntNotes };
+  const plan = planFor(date); // none on Feb 29
+  return plan ? { ...EMPTY, ot: plan.ot, nt: plan.nt } : EMPTY;
+};
 
 // The day loaded into the writing box. `version` bumps on every load, which resets the boxes.
 type Day = { date: string; exists: boolean; start: BibleDraft; version: number };
@@ -104,7 +109,7 @@ export default function BibleWorkspace({
       const entry = opts.preset ?? (await loadBibleDay(date).catch(() => null));
       setLoading(false);
       version.current += 1;
-      const start = draftOf(entry);
+      const start = draftOf(entry, date);
       setDay({ date, exists: Boolean(entry), start, version: version.current });
       setDraft(start);
       setDirty(false);
@@ -232,11 +237,11 @@ export default function BibleWorkspace({
             </div>
 
             <div className="mt-3 flex min-h-10 flex-wrap items-center gap-3">
-              {!isToday && (
+              {(!isToday || !day.exists) && (
                 <>
                   <button
                     type="button"
-                    disabled={saving || !dirty}
+                    disabled={saving || (day.exists && !dirty)}
                     onClick={async () => {
                       if (await save(day, draft, false)) close({ discard: true });
                     }}
@@ -254,7 +259,12 @@ export default function BibleWorkspace({
                 </>
               )}
               <p role="status" className={`text-sm ${status?.error ? "text-danger" : "text-muted"}`}>
-                {status?.text ?? (isToday ? "Saves automatically as you type." : "")}
+                {status?.text ??
+                  (!day.exists && planFor(day.date)
+                    ? "Passages filled in from the reading plan."
+                    : isToday
+                      ? "Saves automatically as you type."
+                      : "")}
               </p>
             </div>
           </div>
