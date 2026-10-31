@@ -34,11 +34,13 @@ export default function LearnedList({
   monthName,
   year,
   focusId,
+  veiled = false,
 }: {
   entries: LearnedEntry[];
   monthName: string;
   year: string;
   focusId?: string;
+  veiled?: boolean; // covered while the add box slides, so you don't see the list reflow
 }) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -90,6 +92,14 @@ export default function LearnedList({
           )}
         </div>
       </div>
+
+      {/* The veil (wide screens): covers the list while the add box slides. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 z-20 hidden bg-surface transition-opacity ease-out motion-reduce:hidden lg:block ${
+          veiled ? "opacity-100 duration-150" : "opacity-0 duration-300"
+        }`}
+      />
     </section>
   );
 }

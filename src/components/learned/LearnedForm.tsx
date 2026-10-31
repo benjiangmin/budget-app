@@ -19,10 +19,12 @@ export default function LearnedForm({
   entry,
   defaultDate,
   onDone,
+  onFold,
 }: {
   entry?: LearnedEntry;
   defaultDate?: string;
   onDone?: () => void;
+  onFold?: () => void; // the add box: shows a ‹ to slide it away
 }) {
   const editing = Boolean(entry);
   const [state, action, pending] = useActionState(editing ? updateLearned : addLearned, initial);
@@ -47,8 +49,23 @@ export default function LearnedForm({
       {entry && <input type="hidden" name="id" value={entry.id} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {!editing && <h2 className="font-display text-lg font-semibold">Something new</h2>}
-        <div className="w-44">
-          <DateWheel key={date} name="entry_date" defaultValue={date} />
+        <div className="flex items-center gap-1">
+          <div className={onFold ? "w-40" : "w-44"}>
+            <DateWheel key={date} name="entry_date" defaultValue={date} />
+          </div>
+          {onFold && (
+            <button
+              type="button"
+              onClick={onFold}
+              aria-label="Fold the add box"
+              title="Fold"
+              className="-mr-2 grid size-9 place-items-center rounded-control text-muted transition-colors hover:bg-paper hover:text-ink"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
       <textarea

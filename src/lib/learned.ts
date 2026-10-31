@@ -37,3 +37,10 @@ export async function searchLearned(query: string, limit = 25): Promise<{ result
   if (error) throw new Error(`Search failed: ${error.message}`);
   return { results: data, total: count ?? data.length };
 }
+
+// Which of these days already have something (used to fold the add box once today's is in).
+export async function getLearnedDays(from: string, to: string): Promise<string[]> {
+  const { data, error } = await db().from("learned_entries").select("entry_date").gte("entry_date", from).lte("entry_date", to);
+  if (error) throw new Error(`Couldn't load entries: ${error.message}`);
+  return [...new Set(data.map((d) => d.entry_date as string))];
+}

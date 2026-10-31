@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { getLearnedForMonth } from "@/lib/learned";
+import { getLearnedDays, getLearnedForMonth } from "@/lib/learned";
 import { currentMonthKey, monthLabel, parseMonthKey, shiftMonth } from "@/lib/month";
 import MonthPicker from "@/components/ui/MonthPicker";
 import StickyTop from "@/components/ui/StickyTop";
-import LearnedForm from "./LearnedForm";
-import LearnedList from "./LearnedList";
+import LearnedWorkspace from "./LearnedWorkspace";
 import LearnedSearch from "./LearnedSearch";
 
 export default async function LearnedView({
@@ -20,7 +19,14 @@ export default async function LearnedView({
   const monthKey = parseMonthKey(raw) ?? thisMonth;
   const focusId = typeof params.focus === "string" ? params.focus : undefined; // from a search result
 
-  const entries = await getLearnedForMonth(monthKey);
+  // The server's today might be a day off from yours (time zones), so look at the days around it.
+  const now = new Date();
+  const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const serverToday = dayKey(now);
+  const [entries, recentDays] = await Promise.all([
+    getLearnedForMonth(monthKey),
+    getLearnedDays(dayKey(new Date(now.getTime() - 864e5)), dayKey(new Date(now.getTime() + 864e5))),
+  ]);
   const { month, year } = monthLabel(monthKey);
   const prev = shiftMonth(monthKey, -1);
   const next = shiftMonth(monthKey, 1);
@@ -47,14 +53,17 @@ export default async function LearnedView({
         <LearnedSearch />
       </StickyTop>
 
-      {/* Left: add one. Right: the month's list (scrolls inside its own box on wide screens). */}
-      <div className="mt-4 flex flex-col gap-6 lg:min-h-[32rem] lg:flex-1 lg:basis-0 lg:flex-row lg:items-stretch">
-        {/* z-[25] keeps the date picker above the list. */}
-        <section aria-label="Add something you learned" className="relative z-[25] shrink-0 self-start rounded-card bg-surface p-4 sm:p-5 lg:w-[24rem]">
-          <LearnedForm defaultDate={isThisMonth ? undefined : `${monthKey}-01`} />
-        </section>
-        <LearnedList entries={entries} monthName={month} year={year} focusId={focusId} />
-      </div>
+      {/* Left: the add box (slides to a slim strip once something's been added today).
+          Right: the month's list, which widens to fill the space. */}
+      <LearnedWorkspace
+        defaultDate={isThisMonth ? undefined : `${monthKey}-01`}
+        daysWithEntries={recentDays}
+        serverToday={serverToday}
+        entries={entries}
+        monthName={month}
+        year={year}
+        focusId={focusId}
+      />
     </>
   );
 }
