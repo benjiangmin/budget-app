@@ -1,0 +1,109 @@
+"use client";
+
+import { useActionState, useEffect, useRef } from "react";
+import { addLearned, updateLearned, type FormState } from "@/app/learned/actions";
+import type { LearnedEntry } from "@/lib/learned";
+import DateWheel from "@/components/ui/DateWheel";
+
+const initial: FormState = { ok: false, message: null };
+const field =
+  "w-full rounded-control border border-line bg-paper px-3 py-2.5 text-ink placeholder:text-muted/70 focus:border-ink";
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Adding (the box on the left) and editing (inside an entry). Pass `entry` to edit.
+export default function LearnedForm({
+  entry,
+  defaultDate,
+  onDone,
+}: {
+  entry?: LearnedEntry;
+  defaultDate?: string;
+  onDone?: () => void;
+}) {
+  const editing = Boolean(entry);
+  const [state, action, pending] = useActionState(editing ? updateLearned : addLearned, initial);
+  const formRef = useRef<HTMLFormElement>(null);
+  const factRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!state.ok) return;
+    if (editing) return onDone?.();
+    // Added: clear the words, keep the date, ready for the next one.
+    for (const name of ["fact", "source"]) {
+      const el = formRef.current?.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (el) el.value = "";
+    }
+    factRef.current?.focus();
+  }, [state.ok, state.savedAt, editing, onDone]);
+
+  const date = entry?.entry_date ?? defaultDate ?? todayKey();
+
+  return (
+    <form ref={formRef} action={action} className="flex flex-col gap-3">
+      {entry && <input type="hidden" name="id" value={entry.id} />}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {!editing && <h2 className="font-display text-lg font-semibold">Something new</h2>}
+        <div className="w-44">
+          <DateWheel key={date} name="entry_date" defaultValue={date} />
+        </div>
+      </div>
+      <textarea
+        ref={factRef}
+        name="fact"
+        required
+        rows={editing ? 3 : 5}
+        maxLength={2000}
+        autoFocus={editing}
+        defaultValue={entry?.fact ?? ""}
+        placeholder="What did you learn today?"
+        aria-label="What you learned"
+        style={{ outline: "none" }}
+        className={`${field} resize-y leading-relaxed`}
+        // Enter adds it (Shift+Enter for a new line).
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            formRef.current?.requestSubmit();
+          }
+        }}
+      />
+      <label className="flex items-center gap-2 rounded-control border border-line bg-paper pl-3 focus-within:border-ink">
+        <span className="shrink-0 text-sm text-muted">From</span>
+        <input
+          name="source"
+          maxLength={200}
+          defaultValue={entry?.source ?? ""}
+          placeholder="(optional)"
+          aria-label="Where you learned it (optional)"
+          style={{ outline: "none" }}
+          className="w-full min-w-0 bg-transparent py-2.5 pr-3 text-ink placeholder:text-muted/70"
+        />
+      </label>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-control bg-accent px-5 py-2.5 font-semibold text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-60"
+        >
+          {pending ? "Saving…" : editing ? "Save changes" : "Add"}
+        </button>
+        {editing && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="rounded-control px-4 py-2.5 text-muted transition-colors hover:bg-paper hover:text-ink"
+          >
+            Cancel
+          </button>
+        )}
+        <p role="status" className={`text-sm ${state.ok ? "text-muted" : "text-danger"}`}>
+          {state.ok && !editing ? "Added." : state.message}
+        </p>
+      </div>
+    </form>
+  );
+}
