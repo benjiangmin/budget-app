@@ -80,7 +80,7 @@ export default function LearnedList({
           ) : (
             <ul className="space-y-2">
               {byDay(entries).map((d) => (
-                <Day key={d.date} date={d.date}>
+                <Day key={d.date} date={d.date} focused={d.items.some((e) => e.id === focusId)}>
                   {d.items.map((e) => (
                     <Entry key={e.id} entry={e} focused={e.id === focusId} />
                   ))}
@@ -95,10 +95,11 @@ export default function LearnedList({
 }
 
 // One day: the date on the left, that day's things on the right.
-function Day({ date, children }: { date: string; children: ReactNode }) {
+// The whole card flashes when you arrive from a search result for something in it.
+function Day({ date, focused, children }: { date: string; focused: boolean; children: ReactNode }) {
   const { day, weekday } = dateParts(date);
   return (
-    <li className="flex gap-3 rounded-card bg-surface px-3 py-3 sm:gap-4">
+    <li className={`flex gap-3 rounded-card bg-surface px-3 py-3 sm:gap-4 ${focused ? "flash" : ""}`}>
       <div className="w-10 shrink-0 pt-0.5 text-center">
         <div className="text-xs text-muted">{weekday}</div>
         <div className="num font-display text-2xl font-semibold leading-tight">{day}</div>
@@ -140,9 +141,7 @@ function Entry({ entry, focused }: { entry: LearnedEntry; focused: boolean }) {
   return (
     <li
       ref={ref}
-      className={`group flex gap-2 py-2 transition-opacity first:pt-0.5 last:pb-0 ${pending ? "opacity-40" : ""} ${
-        focused ? "flash -mx-2 rounded-control px-2" : ""
-      }`}
+      className={`group flex gap-2 py-2 transition-opacity first:pt-0.5 last:pb-0 ${pending ? "opacity-40" : ""}`}
     >
       <div className="min-w-0 flex-1">
         <p className="whitespace-pre-line break-words leading-relaxed text-ink">{entry.fact}</p>

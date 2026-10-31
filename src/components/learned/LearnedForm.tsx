@@ -71,8 +71,11 @@ export default function LearnedForm({
           }
         }}
       />
-      <label className="flex items-center gap-2 rounded-control border border-line bg-paper pl-3 focus-within:border-ink">
-        <span className="shrink-0 text-sm text-muted">From</span>
+      {/* "From" sits in its own tinted tab on the left, split from the typing area by a line. */}
+      <label className="group flex items-stretch overflow-hidden rounded-control border border-accent/40 bg-paper focus-within:border-ink">
+        <span className="grid shrink-0 place-items-center border-r border-accent/40 bg-line px-3 text-sm font-semibold text-ink/70 group-focus-within:border-ink">
+          From
+        </span>
         <input
           name="source"
           maxLength={200}
@@ -80,7 +83,7 @@ export default function LearnedForm({
           placeholder="(optional)"
           aria-label="Where you learned it (optional)"
           style={{ outline: "none" }}
-          className="w-full min-w-0 bg-transparent py-2.5 pr-3 text-ink placeholder:text-muted/70"
+          className="w-full min-w-0 bg-transparent px-3 py-2.5 text-ink placeholder:text-muted/70"
         />
       </label>
       <div className="flex flex-wrap items-center gap-2">
